@@ -1,1 +1,9 @@
-export default function ContactPage() { return (<div className="pt-20"><h1 className="text-3xl font-bold">Nous contacter</h1></div>); }
+import ContactBlock from "../components/ContactBlock";
+
+export default function HomePage() {
+    return (
+        <div className="pt-24"> {/* marge sous la navbar fixe */}
+            <ContactBlock />
+        </div>
+    );
+}

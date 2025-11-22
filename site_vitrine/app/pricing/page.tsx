@@ -1,1 +1,9 @@
-export default function PricingPage() { return (<div className="pt-20"><h1 className="text-3xl font-bold">Tarifications</h1></div>); }
+import PricingBlock from "../components/PricingBlock";
+
+export default function HomePage() {
+    return (
+        <div className="pt-24"> {/* marge sous la navbar fixe */}
+            <PricingBlock />
+        </div>
+    );
+}
