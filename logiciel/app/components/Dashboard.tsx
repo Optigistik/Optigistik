@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { User } from 'firebase/auth';
-import Sidebar from './Sidebar';
-import StatsGrid from './StatsGrid';
-import MapSection from './MapSection';
+import { useState } from "react";
+import { User } from "firebase/auth";
+import Sidebar from "./Sidebar";
+import StatsGrid from "./StatsGrid";
+import MapSection from "./MapSection";
 
 interface DashboardProps {
   user: User | null;
@@ -11,24 +12,43 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user, onLogout }: DashboardProps) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
-    <div className="flex min-h-screen bg-slate-100 font-sans">
-      <Sidebar user={user} onLogout={onLogout} />
-      
-      <main className="flex-1 ml-64 p-8">
+    <div className="flex min-h-screen bg-gray-100 font-sans">
+      <Sidebar
+        user={user}
+        onLogout={onLogout}
+        isCollapsed={isSidebarCollapsed}
+        toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
+
+      <main
+        className={`flex-1 p-8 transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? "ml-20" : "ml-64"
+        }`}
+      >
         <header className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Page d'accueil Logiciel</h1>
-            <p className="text-slate-500 text-sm mt-1">Bienvenue sur votre espace de gestion Optigistik</p>
+            <h1 className="text-2xl font-bold text-opti-red font-display">
+              Page d'accueil Logiciel
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Bienvenue sur votre espace de gestion Optigistik
+            </p>
           </div>
-          {/* Optional: Add global actions or date here */}
-          <div className="text-sm text-slate-400">
-            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          <div className="text-sm text-gray-400">
+            {new Date().toLocaleDateString("fr-FR", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </div>
         </header>
 
         <StatsGrid />
-        
+
         <MapSection />
       </main>
     </div>
