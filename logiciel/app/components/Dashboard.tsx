@@ -23,11 +23,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      <main
-        className={`flex-1 p-8 transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? "ml-20" : "ml-64"
-        }`}
-      >
+      <main className="flex-1 p-8">
         <header className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-opti-red font-display">

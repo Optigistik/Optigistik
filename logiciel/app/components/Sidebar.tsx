@@ -34,7 +34,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out ${
+      className={`bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out overflow-x-hidden ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
@@ -42,7 +42,7 @@ export default function Sidebar({
       <div
         className={`h-16 flex items-center ${
           isCollapsed ? "justify-center" : "px-6 justify-between"
-        } border-b border-gray-100`}
+        } border-b border-gray-100 shrink-0`}
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2 font-bold text-xl text-opti-red font-display">
@@ -58,15 +58,21 @@ export default function Sidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto">
+      <nav
+        className={`flex-1 py-6 space-y-2 overflow-y-auto overflow-x-hidden ${
+          isCollapsed ? "px-2" : "px-3"
+        }`}
+      >
         {menuItems.map((item) => (
           <button
             key={item.name}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all group relative ${
+            className={`w-full flex items-center gap-3 py-3 rounded-lg transition-all group relative ${
+              isCollapsed ? "justify-center px-2" : "px-3"
+            } ${
               item.active
                 ? "bg-red-50 text-opti-red font-medium"
                 : "text-gray-600 hover:bg-gray-50 hover:text-opti-red"
-            } ${isCollapsed ? "justify-center" : ""}`}
+            }`}
             title={isCollapsed ? item.name : ""}
           >
             <item.icon
@@ -92,7 +98,7 @@ export default function Sidebar({
       </nav>
 
       {/* User Profile (Bottom) */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 shrink-0">
         <div
           className={`flex items-center gap-3 ${
             isCollapsed ? "justify-center" : ""
