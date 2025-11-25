@@ -43,13 +43,12 @@ export const getIncidents = async (): Promise<Incident[]> => {
 
 export const getStats = async (): Promise<ChartData[]> => {
   try {
-    // Assuming a 'stats' collection where each doc has 'date' (string like 'Lun') and 'value' (number)
-    // In a real app, you might aggregate this from other collections
-    const q = query(collection(db, "stats"), orderBy("order", "asc"));
+    // Fetching from 'activity' collection as requested
+    const q = query(collection(db, "activity"), orderBy("order", "asc"));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      // Return default data if empty
+      // Return default data if empty to avoid broken UI
       return [
         { name: "Lun", value: 400 },
         { name: "Mar", value: 300 },
@@ -63,7 +62,7 @@ export const getStats = async (): Promise<ChartData[]> => {
 
     return querySnapshot.docs.map((doc) => doc.data() as ChartData);
   } catch (error) {
-    console.error("Error fetching stats:", error);
+    console.error("Error fetching activity stats:", error);
     return [];
   }
 };
