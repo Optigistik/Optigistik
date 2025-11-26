@@ -21,7 +21,7 @@ export default function ValueAddedBlock() {
     ];
 
     return (
-        <section className="w-full bg-white py-20 px-6 md:px-16">
+        <section className="w-full bg-[#E5E8EC] py-20 px-6 md:px-16">
             <div className="max-w-7xl mx-auto px-4">
                 <h2 className="text-3xl md:text-4xl font-archivoBlack text-center text-[#0C1D36] mb-16">
                     Valeur ajoutée

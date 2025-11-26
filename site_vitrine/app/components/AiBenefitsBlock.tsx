@@ -21,7 +21,7 @@ export default function AiBenefitsBlock() {
   return (
     <section className="w-full bg-white py-20 px-6 md:px-16">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        
+
         {/* IMAGE */}
         <div className="order-1 lg:order-none">
           <img
@@ -32,14 +32,14 @@ export default function AiBenefitsBlock() {
         </div>
 
         {/* TEXT + COLUMNS */}
-        <div>
+        <div className="text-center lg:text-left">
           <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] mb-8">
             Un logiciel boosté par l’IA
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {benefits.map((item) => (
-              <div key={item.title}>
+              <div key={item.title} className="flex flex-col items-center lg:items-start">
                 <h3 className="text-lg md:text-xl font-archivoBlack text-[#0C1D36] mb-2">
                   {item.title}
                 </h3>

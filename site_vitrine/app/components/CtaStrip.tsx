@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-export default function CtaStrip() {
+export default function CtaStrip({ className = "bg-[#E5E8EC]" }: { className?: string }) {
   return (
-    <section className="w-full bg-[#E5E8EC] py-10 px-6 md:px-16">
+    <section className={`w-full py-10 px-6 md:px-16 ${className}`}>
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
+        <div className="text-center md:text-left">
           <h2 className="text-2xl md:text-3xl font-archivoBlack text-[#0C1D36] mb-1">
             Prêt à optimiser votre logistique ?
           </h2>
@@ -15,10 +15,10 @@ export default function CtaStrip() {
         </div>
 
         <Link
-          href="/register"
-          className="px-6 py-3 bg-[#FF453A] text-white rounded-lg font-medium text-sm md:text-base hover:bg-[#e63d32] transition"
+          href="/pricing"
+          className="px-6 py-3 bg-[#FF453A] text-white rounded-lg font-medium text-sm md:text-base hover:bg-[#e63d32] transition shadow-sm hover:shadow-md"
         >
-          Accéder au logiciel
+          Obtenir le logiciel
         </Link>
       </div>
     </section>

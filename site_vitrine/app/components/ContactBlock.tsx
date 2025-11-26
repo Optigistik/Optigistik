@@ -59,7 +59,7 @@ export default function ContactBlock() {
                 <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-700 mb-12 px-4 gap-4 text-center md:text-left">
                     <div>+33 4 87 54 34 61</div>
                     <div>37 Esplanade du Général de Gaulle, 92800 Puteaux, France</div>
-                    <div>contact@optigistik.com</div>
+                    <div>optigistik@gmail.com</div>
                 </div>
 
                 <p className="text-center text-xs text-gray-500 mb-12 max-w-4xl mx-auto">

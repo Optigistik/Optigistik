@@ -1,12 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Hide Footer on auth pages
+  if (pathname === '/register' || pathname === '/login') {
+    return null;
+  }
+
   return (
     <footer className="w-full bg-[#3C3C3C] text-gray-300 px-6 md:px-16 py-16">
       <div className="max-w-7xl mx-auto">
 
         {/* TOP PART WITH BUTTON */}
-        <div className="flex justify-end mb-10">
+        <div className="flex justify-center md:justify-end mb-10">
           <Link
             href="/app"
             className="px-6 py-3 bg-[#FF453A] text-white rounded-lg hover:bg-[#e63c32] transition font-medium"
@@ -19,7 +29,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
           {/* LEFT : LOGO */}
-          <div>
+          <div className="flex flex-col items-center md:items-start">
             <img
               src="/assets/LogoOpitigistik2RMBG.png"
               alt="Optigistik Logo"
@@ -47,7 +57,7 @@ export default function Footer() {
           </div>
 
           {/* CENTER : SITEMAP + CONTACT */}
-          <div>
+          <div className="text-center md:text-left flex flex-col items-center md:items-start">
             <h3 className="text-white font-semibold mb-4">Sitemap</h3>
 
             <ul className="space-y-2 text-gray-300">
@@ -70,14 +80,14 @@ export default function Footer() {
           </div>
 
           {/* RIGHT : LEGAL + COPYRIGHT */}
-          <div className="flex flex-col justify-between text-sm h-full">
+          <div className="flex flex-col justify-between text-sm h-full items-center md:items-end text-center md:text-right">
 
-            <div className="flex justify-end gap-6 text-gray-400">
+            <div className="flex justify-center md:justify-end gap-6 text-gray-400">
               <Link href="/legal">Mentions légales</Link>
               <Link href="/cgv">CGV</Link>
             </div>
 
-            <div className="text-right text-gray-500 mt-10">
+            <div className="text-gray-500 mt-10">
               © 2025 — Optigistik
               <br />
               All Rights Reserved

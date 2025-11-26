@@ -1,26 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export default function RegisterPage() {
+export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const router = useRouter();
 
-    const handleRegister = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            await signInWithEmailAndPassword(auth, email, password);
             router.push('/'); // Redirect to home after success
         } catch (err: any) {
-            setError(err.message);
+            setError("Email ou mot de passe incorrect.");
         }
     };
 
@@ -30,7 +30,7 @@ export default function RegisterPage() {
             <div className="hidden lg:flex w-1/2 bg-[#0C1D36] items-center justify-center p-12">
                 <div className="max-w-lg">
                     <h1 className="text-5xl font-archivoBlack text-white leading-tight">
-                        Créez votre compte <br />
+                        Connectez-vous à <br />
                         <span className="text-[#FF453A]">OPTIGISTIK</span>
                     </h1>
                 </div>
@@ -40,10 +40,10 @@ export default function RegisterPage() {
             <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8">
                 <div className="w-full max-w-md">
                     <h2 className="text-3xl font-archivoBlack text-[#0C1D36] mb-8">
-                        Créer un compte
+                        Se connecter
                     </h2>
 
-                    <form onSubmit={handleRegister} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Email
@@ -98,13 +98,13 @@ export default function RegisterPage() {
                             type="submit"
                             className="w-full bg-[#0C1D36] text-white font-medium py-3 rounded-lg hover:bg-[#1a2e4d] transition"
                         >
-                            Créer un compte
+                            Se connecter
                         </button>
 
                         <div className="text-center text-sm text-gray-500 mt-6">
-                            Vous Avez Déjà Un Compte ?{' '}
-                            <Link href="/login" className="text-[#FF453A] font-medium hover:underline">
-                                Se Connecter
+                            Pas encore de compte ?{' '}
+                            <Link href="/register" className="text-[#FF453A] font-medium hover:underline">
+                                Créer un compte
                             </Link>
                         </div>
                     </form>

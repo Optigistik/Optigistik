@@ -2,11 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    await signOut(auth);
+    setShowLogoutModal(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
   const navItems = [
     { label: "Accueil", href: "/" },
@@ -18,93 +42,214 @@ export default function Navbar() {
 
   const handleLinkClick = () => setIsOpen(false);
 
+  // Hide Navbar on auth pages
+  if (pathname === '/register' || pathname === '/login') {
+    return null;
+  }
+
   return (
-    <nav className="w-full bg-white shadow-sm fixed top-0 left-0 z-50 px-6 md:px-16">
-      <div className="max-w-7xl mx-auto py-4 flex items-center justify-between">
+    <>
+      <nav className="w-full bg-white/80 backdrop-blur-md shadow-sm fixed top-0 left-0 z-50 px-6 md:px-16 transition-all duration-300">
+        <div className="max-w-7xl mx-auto py-4 flex items-center justify-between">
 
-        {/* LOGO */}
-        <Link href="/" className="flex items-center gap-2">
-          <img
-            src="/assets/LogoOptigistik2.png"
-            alt="Optigistik logo"
-            className="h-14 md:h-16 w-auto"
-          />
-        </Link>
-
-        {/* DESKTOP NAV */}
-        <div className="hidden lg:flex items-center gap-6">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium px-3 py-1 rounded-md transition 
-                ${isActive
-                    ? "bg-gray-100 text-[#0C1D36]"
-                    : "text-gray-700 hover:text-gray-900"
-                  }
-              `}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* DESKTOP BUTTON */}
-        <Link
-          href="/register"
-          className="hidden lg:block px-5 py-2 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition"
-        >
-          S’enregistrer
-        </Link>
-
-        {/* MOBILE BURGER BUTTON */}
-        <button
-          className="lg:hidden flex flex-col gap-1.5"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <span className={`h-1 w-7 bg-black rounded transition ${isOpen ? "rotate-45 translate-y-2" : ""}`}></span>
-          <span className={`h-1 w-7 bg-black rounded transition ${isOpen ? "opacity-0" : ""}`}></span>
-          <span className={`h-1 w-7 bg-black rounded transition ${isOpen ? "-rotate-45 -translate-y-2" : ""}`}></span>
-        </button>
-
-        {/* MOBILE MENU */}
-        {isOpen && (
-          <div className="absolute top-full left-0 w-full bg-white border-t shadow-lg flex flex-col p-5 lg:hidden">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={handleLinkClick}
-                  className={`text-base font-medium py-3 border-b 
-                  ${isActive
-                      ? "text-[#0C1D36]"
-                      : "text-gray-700 hover:text-gray-900"
-                    }
-                `}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-
-            {/* MOBILE BUTTON */}
-            <Link
-              href="/register"
-              onClick={handleLinkClick}
-              className="mt-4 px-5 py-3 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition text-center"
-            >
-              S’enregistrer
+          {/* LEFT: LOGO */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2">
+              <img
+                src="/assets/LogoOptigistik2.png"
+                alt="Optigistik logo"
+                className="h-12 md:h-14 w-auto"
+              />
             </Link>
           </div>
-        )}
-      </div>
-    </nav>
+
+          {/* CENTER: NAV LINKS */}
+          <div className="hidden lg:flex items-center justify-center flex-1 px-8">
+            <div className="flex items-center gap-8">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`text-sm font-medium relative group transition-colors ${isActive ? "text-[#0C1D36]" : "text-gray-600 hover:text-[#0C1D36]"
+                      }`}
+                  >
+                    {item.label}
+                    <span className={`absolute -bottom-1 left-0 w-full h-0.5 bg-[#FF453A] transform origin-left transition-transform duration-300 ${isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      }`}></span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* RIGHT: ACTIONS (CTA + LOGIN/AVATAR) */}
+          <div className="hidden lg:flex items-center gap-6 flex-shrink-0">
+            {!user ? (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-gray-600 hover:text-[#0C1D36] transition"
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="px-5 py-2.5 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  Obtenir le logiciel
+                </Link>
+              </>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/pricing"
+                  className="px-5 py-2.5 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  Obtenir le logiciel
+                </Link>
+
+                <div className="relative group">
+                  <button
+                    className="w-10 h-10 rounded-full bg-[#0C1D36] text-white flex items-center justify-center font-bold text-lg hover:bg-[#1a2e4d] transition shadow-sm ring-2 ring-transparent hover:ring-[#FF453A]/20"
+                    title={`Connecté en tant que ${user.email}`}
+                  >
+                    {user.email?.charAt(0).toUpperCase()}
+                  </button>
+
+                  {/* Dropdown for Logout */}
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
+                    <div className="p-2">
+                      <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100 mb-1 truncate">
+                        {user.email}
+                      </div>
+                      <button
+                        onClick={handleLogoutClick}
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+                      >
+                        Déconnexion
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* MOBILE BURGER BUTTON */}
+          <button
+            className="lg:hidden flex flex-col gap-1.5"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <span className={`h-1 w-7 bg-black rounded transition ${isOpen ? "rotate-45 translate-y-2" : ""}`}></span>
+            <span className={`h-1 w-7 bg-black rounded transition ${isOpen ? "opacity-0" : ""}`}></span>
+            <span className={`h-1 w-7 bg-black rounded transition ${isOpen ? "-rotate-45 -translate-y-2" : ""}`}></span>
+          </button>
+
+          {/* MOBILE MENU */}
+          {isOpen && (
+            <div className="absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-t shadow-lg flex flex-col p-6 lg:hidden h-[calc(100vh-80px)] overflow-y-auto">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={handleLinkClick}
+                    className={`text-lg font-medium py-4 border-b border-gray-100
+                    ${isActive
+                        ? "text-[#0C1D36]"
+                        : "text-gray-600"
+                      }
+                  `}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              <div className="mt-auto pt-8 flex flex-col gap-4">
+                {!user ? (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={handleLinkClick}
+                      className="w-full py-3 text-center text-gray-700 font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+                    >
+                      Se connecter
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      onClick={handleLinkClick}
+                      className="w-full py-3 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition text-center shadow-lg"
+                    >
+                      Obtenir le logiciel
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 px-2 py-3 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-[#0C1D36] text-white flex items-center justify-center font-bold text-lg">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                        <button
+                          onClick={() => {
+                            handleLinkClick();
+                            handleLogoutClick();
+                          }}
+                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                        >
+                          Se déconnecter
+                        </button>
+                      </div>
+                    </div>
+                    <Link
+                      href="/pricing"
+                      onClick={handleLinkClick}
+                      className="w-full py-3 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition text-center shadow-lg"
+                    >
+                      Obtenir le logiciel
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* LOGOUT MODAL */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100">
+            <h3 className="text-xl font-archivoBlack text-[#0C1D36] mb-4 text-center">
+              Se déconnecter ?
+            </h3>
+            <p className="text-gray-600 text-center mb-8">
+              Êtes-vous sûr de vouloir vous déconnecter de votre compte ?
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={cancelLogout}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 px-4 py-2 bg-[#FF453A] text-white rounded-lg font-medium hover:bg-[#e53e32] transition"
+              >
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

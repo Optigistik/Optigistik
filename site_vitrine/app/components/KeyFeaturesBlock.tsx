@@ -57,10 +57,10 @@ export default function KeyFeaturesBlock() {
         </div>
 
         <Link
-          href="/register"
-          className="inline-block px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63d32] transition"
+          href="/pricing"
+          className="inline-block px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63d32] transition shadow-sm hover:shadow-md"
         >
-          Accéder au logiciel
+          Obtenir le logiciel
         </Link>
       </div>
     </section>
