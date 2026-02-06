@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Home,
-  Truck,
-  Map,
-  Users,
-  Menu,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Home, Truck, Map as MapIcon, Users, Menu } from "lucide-react";
 import { User } from "firebase/auth";
 
 interface SidebarProps {
@@ -19,124 +10,70 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
-export default function Sidebar({
-  user,
-  onLogout,
-  isCollapsed,
-  toggleSidebar,
-}: SidebarProps) {
+export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
   const menuItems = [
     { name: "Accueil", icon: Home, active: true },
     { name: "Conducteurs & Flotte", icon: Truck, active: false },
-    { name: "Tournées & Abonnements", icon: Map, active: false },
+    { name: "Tournées & Abonnements", icon: MapIcon, active: false },
     { name: "Gestion des clients", icon: Users, active: false },
   ];
 
   return (
     <aside
-      className={`bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out overflow-x-hidden ${
-        isCollapsed ? "w-20" : "w-64"
-      }`}
+      className={`bg-white text-opti-blue flex flex-col h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out font-sans ${
+        isCollapsed ? "w-20" : "w-72"
+      } py-6 pl-4`}
     >
-      {/* Header / Logo Area */}
-      <div
-        className={`h-16 flex items-center ${
-          isCollapsed ? "justify-center" : "px-6 justify-between"
-        } border-b border-gray-100 shrink-0`}
-      >
-        {!isCollapsed && (
-          <div className="flex items-center gap-2 font-bold text-xl text-opti-red font-display">
-            <span className="truncate">Optigistik</span>
-          </div>
-        )}
+      {/* Header / Hamburger */}
+      <div className="flex items-center mb-10">
         <button
           onClick={toggleSidebar}
-          className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg text-opti-blue transition-colors"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-6 h-6" />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav
-        className={`flex-1 py-6 space-y-2 overflow-y-auto overflow-x-hidden ${
-          isCollapsed ? "px-2" : "px-3"
-        }`}
-      >
+      <nav className="flex-1 space-y-4">
         {menuItems.map((item) => (
           <button
             key={item.name}
-            className={`w-full flex items-center gap-3 py-3 rounded-lg transition-all group relative ${
-              isCollapsed ? "justify-center px-2" : "px-3"
-            } ${
+            className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
               item.active
-                ? "bg-red-50 text-opti-red font-medium"
-                : "text-gray-600 hover:bg-gray-50 hover:text-opti-red"
+                ? "bg-red-50 text-opti-red font-bold"
+                : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
             }`}
             title={isCollapsed ? item.name : ""}
           >
             <item.icon
               className={`w-5 h-5 shrink-0 ${
-                item.active
-                  ? "text-opti-red"
-                  : "text-gray-400 group-hover:text-opti-red"
+                item.active ? "text-opti-red" : "text-opti-blue"
               }`}
             />
 
             {!isCollapsed && (
               <span className="text-sm truncate">{item.name}</span>
             )}
-
-            {/* Tooltip for collapsed state */}
-            {isCollapsed && (
-              <div className="absolute left-full ml-2 px-2 py-1 bg-opti-red text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                {item.name}
-              </div>
-            )}
           </button>
         ))}
       </nav>
 
       {/* User Profile (Bottom) */}
-      <div className="p-4 border-t border-gray-200 shrink-0">
-        <div
-          className={`flex items-center gap-3 ${
-            isCollapsed ? "justify-center" : ""
-          }`}
-        >
-          <div className="w-10 h-10 rounded-full bg-opti-red flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
-            {user?.email ? user.email[0].toUpperCase() : "U"}
+      <div className="pr-4 mt-auto">
+        <div className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200 shadow-sm bg-white">
+          <div className="w-10 h-10 rounded-full bg-opti-red flex items-center justify-center text-white font-bold shrink-0">
+            D
           </div>
 
           {!isCollapsed && (
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <p className="text-sm font-semibold text-opti-black truncate">
-                {user?.displayName || "Utilisateur"}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-opti-blue truncate">
+                Xavier N. (ALTRANS)
               </p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
           )}
-
-          {!isCollapsed && (
-            <button
-              onClick={onLogout}
-              className="p-2 text-gray-400 hover:text-opti-red hover:bg-red-50 rounded-lg transition-colors"
-              title="Se déconnecter"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          )}
         </div>
-        {/* Logout button for collapsed state */}
-        {isCollapsed && (
-          <button
-            onClick={onLogout}
-            className="mt-4 w-full flex justify-center p-2 text-gray-400 hover:text-opti-red hover:bg-red-50 rounded-lg transition-colors"
-            title="Se déconnecter"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        )}
       </div>
     </aside>
   );

@@ -25,7 +25,7 @@ export const getIncidents = async (): Promise<Incident[]> => {
     const q = query(
       collection(db, "incidents"),
       orderBy("timestamp", "desc"),
-      limit(5)
+      limit(5),
     );
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(
@@ -33,7 +33,7 @@ export const getIncidents = async (): Promise<Incident[]> => {
         ({
           id: doc.id,
           ...doc.data(),
-        } as Incident)
+        }) as Incident,
     );
   } catch (error) {
     console.error("Error fetching incidents:", error);
@@ -64,5 +64,21 @@ export const getStats = async (): Promise<ChartData[]> => {
   } catch (error) {
     console.error("Error fetching activity stats:", error);
     return [];
+  }
+};
+
+export const getMapUrl = async (): Promise<string | null> => {
+  try {
+    const q = query(collection(db, "settings"), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const data = querySnapshot.docs[0].data();
+      return data.mapUrl || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching map config:", error);
+    return null;
   }
 };
