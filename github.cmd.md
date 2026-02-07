@@ -1,5 +1,5 @@
+## Faire une PR
 gh pr create --title "ticketJIRA" --body "Description de mes changements" --reviewer "@axerito10"
-
 
 ## Suivre ses PR en cours
 gh pr status
