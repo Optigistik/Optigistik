@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Truck, Map as MapIcon, Users, Menu } from "lucide-react";
+import { Home, Truck, Map as MapIcon, Users, Menu, LogOut } from "lucide-react";
 import { User } from "firebase/auth";
 
 interface SidebarProps {
@@ -10,7 +10,7 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
-export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
+export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
   const menuItems = [
     { name: "Accueil", icon: Home, active: true },
     { name: "Conducteurs & Flotte", icon: Truck, active: false },
@@ -67,11 +67,20 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
           </div>
 
           {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-opti-blue truncate">
-                Xavier N. (ALTRANS)
-              </p>
-            </div>
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-opti-blue truncate">
+                  Xavier N. (ALTRANS)
+                </p>
+              </div>
+              <button
+                onClick={onLogout}
+                className="p-2 text-gray-500 hover:text-opti-red hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </>
           )}
         </div>
       </div>
