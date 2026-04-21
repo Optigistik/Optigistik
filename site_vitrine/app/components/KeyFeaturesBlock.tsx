@@ -20,17 +20,17 @@ export default function KeyFeaturesBlock() {
   ];
 
   return (
-    <section className="w-full bg-[#E5E8EC] py-20 px-6 md:px-16">
+    <section className="w-full bg-[#E5E8EC] dark:bg-zinc-800 py-20 px-6 md:px-16 transition-colors duration-300">
       <div className="max-w-6xl mx-auto text-center">
-        <p className="text-xs md:text-sm tracking-[0.2em] font-semibold text-[#0C1D36] mb-4">
+        <p className="text-xs md:text-sm tracking-[0.2em] font-semibold text-[#0C1D36] dark:text-gray-300 mb-4">
           LES FONCTIONNALITÉS CLÉS
         </p>
 
-        <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] mb-4">
+        <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] dark:text-white mb-4">
           Toutes vos opérations, réunies dans un seul logiciel
         </h2>
 
-        <p className="text-sm md:text-base text-gray-700 max-w-2xl mx-auto mb-12">
+        <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-12">
           OPTIGISTIK centralise vos besoins logistiques dans une plateforme unique,
           intuitive et boostée par l’IA.
         </p>
@@ -45,11 +45,11 @@ export default function KeyFeaturesBlock() {
                 className="w-12 h-12 mb-4"
               />
 
-              <h3 className="text-lg font-archivoBlack text-[#0C1D36] mb-2">
+              <h3 className="text-lg font-archivoBlack text-[#0C1D36] dark:text-white mb-2">
                 {item.title}
               </h3>
 
-              <p className="text-sm md:text-base text-gray-700">
+              <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
                 {item.text}
               </p>
             </div>
@@ -57,10 +57,10 @@ export default function KeyFeaturesBlock() {
         </div>
 
         <Link
-          href="/register"
-          className="inline-block px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63d32] transition"
+          href="/pricing"
+          className="inline-block px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63d32] transition shadow-sm hover:shadow-md"
         >
-          Accéder au logiciel
+          Obtenir le logiciel
         </Link>
       </div>
     </section>

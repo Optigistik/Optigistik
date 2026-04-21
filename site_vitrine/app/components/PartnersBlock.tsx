@@ -9,14 +9,14 @@ export default function PartnersBlock() {
   ];
 
   return (
-    <section className="w-full bg-white py-16 px-6 md:px-16">
-      
+    <section className="w-full bg-white dark:bg-zinc-900 py-16 px-6 md:px-16 transition-colors duration-300">
+
       {/* TITRES dans un container centré */}
       <div className="max-w-6xl mx-auto text-center mb-10">
-        <p className="text-xs md:text-sm tracking-[0.2em] font-semibold text-[#0C1D36] mb-2">
+        <p className="text-xs md:text-sm tracking-[0.2em] font-semibold text-[#0C1D36] dark:text-gray-300 mb-2">
           NOS PARTENAIRES
         </p>
-        <h2 className="text-2xl md:text-3xl font-archivoBlack text-[#0C1D36]">
+        <h2 className="text-2xl md:text-3xl font-archivoBlack text-[#0C1D36] dark:text-white">
           Ils nous font confiance
         </h2>
       </div>
