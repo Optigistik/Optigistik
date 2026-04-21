@@ -5,16 +5,24 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { isAdmin } from "../lib/adminUtils";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        const adminStatus = await isAdmin();
+        setIsAdminUser(adminStatus);
+      } else {
+        setIsAdminUser(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -113,11 +121,19 @@ export default function Navbar() {
                   </button>
 
                   {/* Dropdown for Logout */}
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right z-50">
                     <div className="p-2">
                       <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100 mb-1 truncate">
                         {user.email}
                       </div>
+                      {isAdminUser && (
+                        <Link
+                          href="/admin"
+                          className="w-full text-left px-3 py-2 text-sm text-[#0C1D36] hover:bg-gray-50 rounded-lg transition flex items-center gap-2"
+                        >
+                          Dashboard Admin
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogoutClick}
                         className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -197,6 +213,15 @@ export default function Navbar() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
+                        {isAdminUser && (
+                          <Link
+                            href="/admin"
+                            onClick={handleLinkClick}
+                            className="text-xs text-[#0C1D36] dark:text-white font-medium hover:underline"
+                          >
+                            Dashboard Admin
+                          </Link>
+                        )}
                         <button
                           onClick={() => {
                             handleLinkClick();
