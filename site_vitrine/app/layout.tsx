@@ -5,6 +5,8 @@ import "./globals.css";
 // 👉 Import de ta Navbar
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import AccessibilityToolbar from "./components/AccessibilityToolbar";
+import { Providers } from "./providers";
 
 // Polices
 const geistSans = Geist({
@@ -35,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body
         className={`
           ${geistSans.variable}
@@ -44,9 +46,12 @@ export default function RootLayout({
           antialiased
         `}
       >
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        <Providers>
+          <Navbar />
+          <main id="main-content">{children}</main>
+          <Footer />
+          <AccessibilityToolbar />
+        </Providers>
       </body>
     </html>
   );

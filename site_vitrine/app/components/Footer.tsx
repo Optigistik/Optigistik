@@ -12,16 +12,16 @@ export default function Footer() {
   }
 
   return (
-    <footer className="w-full bg-[#3C3C3C] text-gray-300 px-6 md:px-16 py-16">
+    <footer className="w-full bg-[#3C3C3C] dark:bg-zinc-950 text-gray-300 px-6 md:px-16 py-16 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
 
         {/* TOP PART WITH BUTTON */}
         <div className="flex justify-center md:justify-end mb-10">
           <Link
-            href="/app"
-            className="px-6 py-3 bg-[#FF453A] text-white rounded-lg hover:bg-[#e63c32] transition font-medium"
+            href="/pricing"
+            className="px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63c32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
           >
-            Accéder au logiciel
+            Obtenir le logiciel
           </Link>
         </div>
 
@@ -87,7 +87,7 @@ export default function Footer() {
               <Link href="/cgv">CGV</Link>
             </div>
 
-            <div className="text-gray-500 mt-10">
+            <div className="text-gray-500 dark:text-gray-400 mt-10">
               © 2025 — Optigistik
               <br />
               All Rights Reserved

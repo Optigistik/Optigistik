@@ -13,22 +13,22 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     }
 
     return (
-        <div className="min-h-screen bg-white pt-24 px-6 md:px-16 pb-20">
+        <div className="min-h-screen bg-white dark:bg-zinc-900 pt-24 px-6 md:px-16 pb-20 transition-colors duration-300">
             <article className="max-w-4xl mx-auto">
                 {/* Header */}
                 <header className="mb-12">
                     <Link
                         href="/blog"
-                        className="text-[#0C1D36] hover:text-[#FF453A] transition text-sm mb-6 inline-block"
+                        className="text-[#0C1D36] dark:text-white hover:text-[#FF453A] dark:hover:text-[#FF453A] transition text-sm mb-6 inline-block"
                     >
                         ← Retour au blog
                     </Link>
 
-                    <h1 className="text-4xl md:text-5xl font-archivoBlack text-[#0C1D36] mb-6 leading-tight">
+                    <h1 className="text-4xl md:text-5xl font-archivoBlack text-[#0C1D36] dark:text-white mb-6 leading-tight">
                         {article.title}
                     </h1>
 
-                    <div className="flex items-center gap-4 text-gray-600">
+                    <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400">
                         <span>{article.author}</span>
                         <span>•</span>
                         <time dateTime={article.createdAt.toISOString()}>
@@ -43,7 +43,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
                 {/* Featured Image */}
                 {article.featuredImage && (
-                    <div className="mb-12 rounded-xl overflow-hidden">
+                    <div className="mb-12 rounded-xl overflow-hidden shadow-sm">
                         <img
                             src={article.featuredImage}
                             alt={article.title}
@@ -53,14 +53,14 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                 )}
 
                 {/* Content */}
-                <div className="prose prose-lg max-w-none">
-                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <div className="prose prose-lg max-w-none dark:prose-invert">
+                    <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                         {article.content}
                     </div>
                 </div>
 
                 {/* Footer */}
-                <footer className="mt-16 pt-8 border-t border-gray-200">
+                <footer className="mt-16 pt-8 border-t border-gray-200 dark:border-zinc-800">
                     <Link
                         href="/blog"
                         className="inline-block px-6 py-3 bg-[#FF453A] text-white rounded-lg hover:bg-[#e63d32] transition font-medium"

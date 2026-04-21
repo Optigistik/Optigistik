@@ -49,7 +49,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="w-full bg-white/80 backdrop-blur-md shadow-sm fixed top-0 left-0 z-50 px-6 md:px-16 transition-all duration-300">
+      <nav className="w-full bg-white dark:bg-zinc-950 shadow-sm fixed top-0 left-0 z-50 px-6 md:px-16 transition-all duration-300 border-b border-transparent dark:border-zinc-900">
         <div className="max-w-7xl mx-auto py-4 flex items-center justify-between">
 
           {/* LEFT: LOGO */}
@@ -58,7 +58,7 @@ export default function Navbar() {
               <img
                 src="/assets/LogoOptigistik2.png"
                 alt="Optigistik logo"
-                className="h-12 md:h-14 w-auto"
+                className="h-12 md:h-16 w-auto dark:brightness-0 dark:invert"
               />
             </Link>
           </div>
@@ -73,7 +73,7 @@ export default function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`text-sm font-medium relative group transition-colors ${isActive ? "text-[#0C1D36]" : "text-gray-600 hover:text-[#0C1D36]"
+                    className={`text-sm font-medium relative group transition-colors ${isActive ? "text-[#0C1D36] dark:text-white" : "text-gray-600 dark:text-gray-300 hover:text-[#0C1D36] dark:hover:text-white"
                       }`}
                   >
                     {item.label}
@@ -97,20 +97,13 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/pricing"
-                  className="px-5 py-2.5 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  className="px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63d32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                 >
                   Obtenir le logiciel
                 </Link>
               </>
             ) : (
               <div className="flex items-center gap-4">
-                <Link
-                  href="/pricing"
-                  className="px-5 py-2.5 bg-[#FF453A] text-white rounded-xl font-medium hover:bg-[#e53e32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                >
-                  Obtenir le logiciel
-                </Link>
-
                 <div className="relative group">
                   <button
                     className="w-10 h-10 rounded-full bg-[#0C1D36] text-white flex items-center justify-center font-bold text-lg hover:bg-[#1a2e4d] transition shadow-sm ring-2 ring-transparent hover:ring-[#FF453A]/20"
@@ -134,6 +127,13 @@ export default function Navbar() {
                     </div>
                   </div>
                 </div>
+
+                <Link
+                  href="/pricing"
+                  className="px-6 py-3 bg-[#FF453A] text-white rounded-lg text-sm md:text-base font-medium hover:bg-[#e63d32] transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  Obtenir le logiciel
+                </Link>
               </div>
             )}
           </div>
@@ -150,7 +150,7 @@ export default function Navbar() {
 
           {/* MOBILE MENU */}
           {isOpen && (
-            <div className="absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-t shadow-lg flex flex-col p-6 lg:hidden h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="absolute top-full left-0 w-full bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t dark:border-zinc-900 shadow-lg flex flex-col p-6 lg:hidden h-[calc(100vh-80px)] overflow-y-auto">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
 
@@ -159,10 +159,10 @@ export default function Navbar() {
                     key={item.href}
                     href={item.href}
                     onClick={handleLinkClick}
-                    className={`text-lg font-medium py-4 border-b border-gray-100
+                    className={`text-lg font-medium py-4 border-b border-gray-100 dark:border-zinc-800
                     ${isActive
-                        ? "text-[#0C1D36]"
-                        : "text-gray-600"
+                        ? "text-[#0C1D36] dark:text-white"
+                        : "text-gray-600 dark:text-gray-300"
                       }
                   `}
                   >
@@ -177,7 +177,7 @@ export default function Navbar() {
                     <Link
                       href="/login"
                       onClick={handleLinkClick}
-                      className="w-full py-3 text-center text-gray-700 font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+                      className="w-full py-3 text-center text-gray-700 dark:text-white font-medium border border-gray-200 dark:border-zinc-700 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
                     >
                       Se connecter
                     </Link>
@@ -192,17 +192,17 @@ export default function Navbar() {
                 ) : (
                   <>
                     <div className="flex items-center gap-3 px-2 py-3 mb-2">
-                      <div className="w-10 h-10 rounded-full bg-[#0C1D36] text-white flex items-center justify-center font-bold text-lg">
+                      <div className="w-10 h-10 rounded-full bg-[#0C1D36] dark:bg-zinc-700 text-white flex items-center justify-center font-bold text-lg">
                         {user.email?.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
                         <button
                           onClick={() => {
                             handleLinkClick();
                             handleLogoutClick();
                           }}
-                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                          className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium"
                         >
                           Se déconnecter
                         </button>

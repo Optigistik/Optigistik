@@ -50,25 +50,25 @@ export default function ContactBlock() {
     }
 
     return (
-        <section className="w-full bg-white py-20 px-6 md:px-16">
+        <section className="w-full bg-white dark:bg-zinc-900 pt-32 pb-20 px-6 md:px-16 transition-colors duration-300">
             <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl md:text-4xl font-archivoBlack text-center text-[#0C1D36] mb-12">
+                <h2 className="text-3xl md:text-4xl font-archivoBlack text-center text-[#0C1D36] dark:text-white mb-12">
                     Une demande ? Contactez-nous !
                 </h2>
 
-                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-700 mb-12 px-4 gap-4 text-center md:text-left">
+                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-700 dark:text-gray-300 mb-12 px-4 gap-4 text-center md:text-left">
                     <div>+33 4 87 54 34 61</div>
                     <div>37 Esplanade du Général de Gaulle, 92800 Puteaux, France</div>
                     <div>optigistik@gmail.com</div>
                 </div>
 
-                <p className="text-center text-xs text-gray-500 mb-12 max-w-4xl mx-auto">
+                <p className="text-center text-xs text-gray-500 dark:text-gray-400 mb-12 max-w-4xl mx-auto">
                     Notre équipe est à votre disposition pour répondre à vos questions, vous accompagner dans vos projets et vous présenter OPTIGISTIK plus en détail.
                 </p>
 
                 <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
                     <div className="space-y-2">
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Nom *
                         </label>
                         <input
@@ -76,12 +76,12 @@ export default function ContactBlock() {
                             id="name"
                             name="name"
                             required
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label htmlFor="siret" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="siret" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             SIRET de l'entreprise *
                         </label>
                         <input
@@ -89,12 +89,12 @@ export default function ContactBlock() {
                             id="siret"
                             name="siret"
                             required
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Mail *
                         </label>
                         <input
@@ -102,12 +102,12 @@ export default function ContactBlock() {
                             id="email"
                             name="email"
                             required
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Message *
                         </label>
                         <textarea
@@ -115,7 +115,7 @@ export default function ContactBlock() {
                             name="message"
                             required
                             rows={6}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow resize-none"
                         ></textarea>
                     </div>
 

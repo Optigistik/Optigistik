@@ -7,13 +7,13 @@ import CtaStrip from "../components/CtaStrip";
 
 export default function FeaturesPage() {
     return (
-        <div className="min-h-screen bg-gray-50 pt-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 transition-colors duration-300">
             <FeaturesBannerBlock />
             <OperationalManagementBlock />
             <SmartOptimizationBlock />
             <RealTimeTrackingBlock />
             <ValueAddedBlock />
-            <CtaStrip className="bg-white" />
+            <CtaStrip className="bg-blue" />
         </div>
     );
 }

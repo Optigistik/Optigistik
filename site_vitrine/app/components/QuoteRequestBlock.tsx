@@ -27,12 +27,12 @@ export default function QuoteRequestBlock() {
 
     if (isSuccess) {
         return (
-            <section className="w-full py-20 px-4 bg-white flex flex-col items-center justify-center rounded-xl shadow-sm my-12">
+            <section className="w-full py-20 px-4 bg-white dark:bg-zinc-900 flex flex-col items-center justify-center rounded-xl shadow-sm my-12 transition-colors duration-300">
                 <div className="text-center max-w-2xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#0C1D36] mb-6">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#0C1D36] dark:text-white mb-6">
                         Demande reçue !
                     </h2>
-                    <p className="text-gray-600 mb-8">
+                    <p className="text-gray-600 dark:text-gray-300 mb-8">
                         Merci de votre intérêt pour Optigistik. Notre équipe commerciale va étudier votre demande et vous recontactera très prochainement avec une proposition adaptée.
                     </p>
                     <div className="flex justify-center">
@@ -48,13 +48,13 @@ export default function QuoteRequestBlock() {
     }
 
     return (
-        <section className="w-full bg-white py-16 px-6 md:px-16 rounded-[2rem] shadow-sm my-12">
+        <section className="w-full bg-white dark:bg-zinc-900 py-16 px-6 md:px-16 rounded-[2rem] shadow-sm my-12 transition-colors duration-300">
             <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] mb-4">
+                    <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] dark:text-white mb-4">
                         Demander un devis personnalisé
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                         Remplissez ce formulaire pour que nous puissions comprendre vos besoins et vous proposer la meilleure offre.
                     </p>
                 </div>
@@ -63,7 +63,7 @@ export default function QuoteRequestBlock() {
                     {/* Section 1: Contact Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Nom de l'entreprise *
                             </label>
                             <input
@@ -71,11 +71,11 @@ export default function QuoteRequestBlock() {
                                 id="companyName"
                                 name="companyName"
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label htmlFor="contactName" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="contactName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Nom du contact *
                             </label>
                             <input
@@ -83,11 +83,11 @@ export default function QuoteRequestBlock() {
                                 id="contactName"
                                 name="contactName"
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Email professionnel *
                             </label>
                             <input
@@ -95,11 +95,11 @@ export default function QuoteRequestBlock() {
                                 id="email"
                                 name="email"
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Téléphone *
                             </label>
                             <input
@@ -107,26 +107,26 @@ export default function QuoteRequestBlock() {
                                 id="phone"
                                 name="phone"
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                             />
                         </div>
                     </div>
 
                     {/* Section 2: Operational Details */}
-                    <div className="border-t border-gray-100 pt-8">
-                        <h3 className="text-xl font-archivoBlack text-[#0C1D36] mb-6">
+                    <div className="border-t border-gray-100 dark:border-zinc-800 pt-8">
+                        <h3 className="text-xl font-archivoBlack text-[#0C1D36] dark:text-white mb-6">
                             Vos opérations logistiques
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label htmlFor="fleetSize" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="fleetSize" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Taille de la flotte (véhicules) *
                                 </label>
                                 <select
                                     id="fleetSize"
                                     name="fleetSize"
                                     required
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                                 >
                                     <option value="">Sélectionnez une option</option>
                                     <option value="1-5">1 - 5 véhicules</option>
@@ -136,7 +136,7 @@ export default function QuoteRequestBlock() {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label htmlFor="sector" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="sector" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Secteur d'activité *
                                 </label>
                                 <input
@@ -145,7 +145,7 @@ export default function QuoteRequestBlock() {
                                     name="sector"
                                     placeholder="Ex: Transport frigorifique, BTP, Livraison dernier km..."
                                     required
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
                                 />
                             </div>
                         </div>
@@ -153,7 +153,7 @@ export default function QuoteRequestBlock() {
 
                     {/* Section 3: Needs */}
                     <div className="space-y-2">
-                        <label htmlFor="needs" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="needs" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Vos besoins spécifiques ou challenges actuels
                         </label>
                         <textarea
@@ -161,7 +161,7 @@ export default function QuoteRequestBlock() {
                             name="needs"
                             rows={4}
                             placeholder="Dites-nous en plus sur ce que vous cherchez à améliorer (optimisation de tournées, réduction des coûts, suivi temps réel...)"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#F5F7FA] focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow resize-none"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow resize-none"
                         ></textarea>
                     </div>
 

@@ -21,9 +21,9 @@ export default function ValueAddedBlock() {
     ];
 
     return (
-        <section className="w-full bg-[#E5E8EC] py-20 px-6 md:px-16">
+        <section className="w-full bg-[#E5E8EC] dark:bg-zinc-800 py-20 px-6 md:px-16 transition-colors duration-300">
             <div className="max-w-7xl mx-auto px-4">
-                <h2 className="text-3xl md:text-4xl font-archivoBlack text-center text-[#0C1D36] mb-16">
+                <h2 className="text-3xl md:text-4xl font-archivoBlack text-center text-[#0C1D36] dark:text-white mb-16">
                     Valeur ajoutée
                 </h2>
 
@@ -31,7 +31,7 @@ export default function ValueAddedBlock() {
                     <img
                         src="/assets/solar_graph-up-linear.png"
                         alt="Graph up icon"
-                        className="w-12 h-12"
+                        className="w-12 h-12 dark:invert"
                     />
                 </div>
 
@@ -41,10 +41,10 @@ export default function ValueAddedBlock() {
                             {/* Placeholder for benefit icons */}
                             {/* <img src={`/assets/benefit_${index}.png`} alt={benefit.title} className="w-12 h-12 mb-4" /> */}
 
-                            <h3 className="text-lg md:text-xl font-archivoBlack text-[#0C1D36] mb-3">
+                            <h3 className="text-lg md:text-xl font-archivoBlack text-[#0C1D36] dark:text-white mb-3">
                                 {benefit.title}
                             </h3>
-                            <p className="text-sm md:text-base text-gray-700 leading-relaxed">
+                            <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
                                 {benefit.description}
                             </p>
                         </div>

@@ -2,16 +2,16 @@ import Link from "next/link";
 
 export default function HeroBlock() {
   return (
-    <section className="w-full bg-[#E5E8EC] py-20 px-6 md:px-16">
+    <section className="w-full bg-[#E5E8EC] dark:bg-zinc-800 pt-32 pb-20 px-6 md:px-16 transition-colors duration-300">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
         {/* LEFT TEXT */}
         <div className="text-center lg:text-left">
-          <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] leading-tight mb-6">
+          <h1 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] dark:text-white leading-tight mb-6">
             Une solution qui vous fera <br /> gagner du temps
-          </h2>
+          </h1>
 
-          <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-8">
+          <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg leading-relaxed mb-8">
             Notre solution révolutionne la logistique grâce à l’intelligence
             artificielle. Elle identifie les optimisations possibles et génère
             automatiquement des feuilles de route intelligentes. Grâce à elle,
