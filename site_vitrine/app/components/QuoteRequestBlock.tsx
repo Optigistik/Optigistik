@@ -48,7 +48,7 @@ export default function QuoteRequestBlock() {
     }
 
     return (
-        <section className="w-full bg-white dark:bg-zinc-900 py-16 px-6 md:px-16 rounded-[2rem] shadow-sm my-12 transition-colors duration-300">
+        <section id="devis" className="w-full bg-white dark:bg-zinc-900 py-16 px-6 md:px-16 rounded-[2rem] shadow-sm my-12 transition-colors duration-300 scroll-mt-28">
             <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-archivoBlack text-[#0C1D36] dark:text-white mb-4">
@@ -122,18 +122,15 @@ export default function QuoteRequestBlock() {
                                 <label htmlFor="fleetSize" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Taille de la flotte (véhicules) *
                                 </label>
-                                <select
+                                <input
+                                    type="number"
                                     id="fleetSize"
                                     name="fleetSize"
+                                    min="1"
+                                    placeholder="Ex: 1200"
                                     required
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-[#F5F7FA] dark:bg-zinc-800 dark:text-white focus:ring-2 focus:ring-[#FF453A] focus:outline-none transition-shadow"
-                                >
-                                    <option value="">Sélectionnez une option</option>
-                                    <option value="1-5">1 - 5 véhicules</option>
-                                    <option value="6-20">6 - 20 véhicules</option>
-                                    <option value="21-50">21 - 50 véhicules</option>
-                                    <option value="50+">Plus de 50 véhicules</option>
-                                </select>
+                                />
                             </div>
                             <div className="space-y-2">
                                 <label htmlFor="sector" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
