@@ -155,7 +155,7 @@ export default function AccessibilityToolbar() {
             {/* Toggle Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-14 h-14 bg-[#0C1D36] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#1a2e4d] transition transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#0C1D36]/30"
+                className="w-14 h-14 bg-black text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-black/30"
                 aria-label="Ouvrir les options d'accessibilité"
                 aria-expanded={isOpen}
             >

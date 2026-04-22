@@ -51,12 +51,12 @@ export default function ContactBlock() {
 
     return (
         <section className="w-full bg-white dark:bg-zinc-900 pt-32 pb-20 px-6 md:px-16 transition-colors duration-300">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <h2 className="text-3xl md:text-4xl font-archivoBlack text-center text-[#0C1D36] dark:text-white mb-12">
                     Une demande ? Contactez-nous !
                 </h2>
 
-                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-700 dark:text-gray-300 mb-12 px-4 gap-4 text-center md:text-left">
+                <div className="flex flex-col md:flex-row justify-between items-center bg-[#E5E8EC] dark:bg-zinc-800 rounded-xl px-8 py-5 mb-12 gap-4 text-center md:text-left text-sm text-gray-700 dark:text-gray-300 transition-colors duration-300">
                     <div>+33 4 87 54 34 61</div>
                     <div>37 Esplanade du Général de Gaulle, 92800 Puteaux, France</div>
                     <div>optigistik@gmail.com</div>

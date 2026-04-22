@@ -31,9 +31,9 @@ export default function Footer() {
           {/* LEFT : LOGO */}
           <div className="flex flex-col items-center md:items-start">
             <img
-              src="/assets/LogoOpitigistik2RMBG.png"
+              src="/assets/LogoOptigistik2-.png"
               alt="Optigistik Logo"
-              className="h-36 w-auto mb-6"
+              className="h-36 w-auto mb-6 brightness-0 invert"
             />
 
             {/* Social icons */}
@@ -82,9 +82,15 @@ export default function Footer() {
           {/* RIGHT : LEGAL + COPYRIGHT */}
           <div className="flex flex-col justify-between text-sm h-full items-center md:items-end text-center md:text-right">
 
-            <div className="flex justify-center md:justify-end gap-6 text-gray-400">
-              <Link href="/legal">Mentions légales</Link>
-              <Link href="/cgv">CGV</Link>
+            <div className="flex flex-col items-center md:items-end gap-2 text-gray-400 text-sm">
+              <div className="flex gap-4">
+                <Link href="/legal" className="hover:text-white transition">Mentions légales</Link>
+                <Link href="/cgv" className="hover:text-white transition">CGV</Link>
+              </div>
+              <div className="flex gap-4">
+                <Link href="/confidentialite" className="hover:text-white transition">Confidentialité</Link>
+                <Link href="/cookies" className="hover:text-white transition">Cookies</Link>
+              </div>
             </div>
 
             <div className="text-gray-500 dark:text-gray-400 mt-10">

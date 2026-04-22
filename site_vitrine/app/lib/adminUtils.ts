@@ -1,17 +1,15 @@
-import { auth, db } from './firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth } from './firebase';
 
 /**
- * Check if the current user is an admin
+ * Check if the current user is an admin via Firebase Custom Claims
  */
 export async function isAdmin(): Promise<boolean> {
     const user = auth.currentUser;
     if (!user) return false;
 
     try {
-        // Check if user email is in the admins collection
-        const adminDoc = await getDoc(doc(db, 'admins', user.email!));
-        return adminDoc.exists();
+        const token = await user.getIdTokenResult(true);
+        return token.claims.admin === true;
     } catch (error) {
         console.error('Error checking admin status:', error);
         return false;

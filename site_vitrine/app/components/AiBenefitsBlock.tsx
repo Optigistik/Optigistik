@@ -25,7 +25,7 @@ export default function AiBenefitsBlock() {
         {/* IMAGE */}
         <div className="order-1 lg:order-none">
           <img
-            src="/assets/aiTrucks.png"
+            src="/assets/AiTrucks.png"
             alt="Camions et itinéraires optimisés par l’IA"
             className="w-full h-auto rounded-2xl shadow-sm object-cover"
           />
