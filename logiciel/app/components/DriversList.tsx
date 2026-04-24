@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Users, UserPlus, Pencil, MoreVertical, AlertCircle } from "lucide-react";
+import { Users, UserPlus, Pencil, AlertCircle } from "lucide-react";
 import { Driver } from "@/types";
 import { getDrivers } from "@/services/drivers";
 import DriverEditModal from "./DriverEditModal";
@@ -150,9 +150,6 @@ export default function DriversList() {
                         >
                           <Pencil className="w-4 h-4" />
                         </Link>
-                        <button className="p-2 text-gray-400 hover:text-opti-blue hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>

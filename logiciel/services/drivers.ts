@@ -6,6 +6,7 @@ import {
   getDoc,
   updateDoc,
   addDoc,
+  deleteDoc,
   query,
   orderBy,
 } from "firebase/firestore";
@@ -75,7 +76,6 @@ function normalizeDriver(data: Record<string, unknown>, id: string): Driver {
     seniority: (data.seniority as string) || "",
     languages: normalizeStringArray(data.languages),
     role: (data.role as string) || "",
-    fleet: (data.fleet as string) || "",
     status: (data.status as Driver["status"]) || "DISPONIBLE",
     unavailabilities: Array.isArray(data.unavailabilities)
       ? data.unavailabilities
@@ -140,7 +140,17 @@ export const addDriver = async (
     const docRef = await addDoc(collection(db, "drivers"), data);
     return { id: docRef.id, ...data };
   } catch (error) {
-    console.error("Error adding driver:", error);
     return null;
+  }
+};
+
+export const deleteDriver = async (id: string): Promise<boolean> => {
+  try {
+    const docRef = doc(db, "drivers", id);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting driver:", error);
+    return false;
   }
 };

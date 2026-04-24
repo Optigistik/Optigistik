@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Mail, Phone, Pencil, MoreVertical, Truck,
+  ArrowLeft, Mail, Phone, Pencil, Truck,
   CalendarPlus, Save, Trash2, ChevronRight, Shield, Clock,
 } from "lucide-react";
-import { Driver } from "@/types";
+import { Driver, DriverUnavailability } from "@/types";
+import { updateDriver, deleteDriver } from "@/services/drivers";
 import DriverEditModal from "./DriverEditModal";
 
 interface DriverDetailProps {
@@ -28,8 +30,40 @@ const unavailabilityTypeConfig: Record<string, { label: string; color: string; b
 };
 
 export default function DriverDetail({ driver, onUpdate }: DriverDetailProps) {
+  const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showUnavailForm, setShowUnavailForm] = useState(false);
+  const [unavailForm, setUnavailForm] = useState({
+    type: "CONGES_ANNUELS" as DriverUnavailability["type"],
+    startDate: "",
+    endDate: "",
+    note: "",
+  });
+  const [savingUnavail, setSavingUnavail] = useState(false);
   const status = statusConfig[driver.status] || statusConfig.DISPONIBLE;
+
+  const handleAddUnavailability = async () => {
+    if (!unavailForm.startDate || !unavailForm.endDate) return;
+    setSavingUnavail(true);
+    const newUnavail: DriverUnavailability = {
+      id: `u-${Date.now()}`,
+      type: unavailForm.type,
+      label: unavailForm.type,
+      startDate: unavailForm.startDate,
+      endDate: unavailForm.endDate,
+      note: unavailForm.note || undefined,
+    };
+    const updated = [...(driver.unavailabilities || []), newUnavail];
+    const success = await updateDriver(driver.id, { unavailabilities: updated });
+    setSavingUnavail(false);
+    if (success) {
+      onUpdate({ ...driver, unavailabilities: updated });
+      setShowUnavailForm(false);
+      setUnavailForm({ type: "CONGES_ANNUELS", startDate: "", endDate: "", note: "" });
+    }
+  };
 
   const getInitials = () => {
     return `${(driver.firstName || "").charAt(0)}${(driver.lastName || "").charAt(0)}`.toUpperCase();
@@ -72,7 +106,7 @@ export default function DriverDetail({ driver, onUpdate }: DriverDetailProps) {
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mb-2">
-                  🚛 {driver.role || "Conducteur"}{driver.fleet ? ` · ${driver.fleet}` : ""}
+                  🚛 {driver.role || "Conducteur"}
                 </p>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span className="flex items-center gap-1.5">
@@ -93,9 +127,6 @@ export default function DriverDetail({ driver, onUpdate }: DriverDetailProps) {
                 className="flex items-center gap-2 bg-opti-red text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-opti-red-dark transition-colors cursor-pointer"
               >
                 Modifier le profil
-              </button>
-              <button className="p-2 text-gray-400 hover:text-opti-blue hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-                <MoreVertical className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -219,11 +250,70 @@ export default function DriverDetail({ driver, onUpdate }: DriverDetailProps) {
                 <h2 className="text-lg font-bold text-opti-blue font-display">
                   Indisponibilité
                 </h2>
-                <button className="flex items-center gap-1.5 text-sm text-opti-blue hover:text-opti-red font-semibold transition-colors cursor-pointer">
+                <button
+                  onClick={() => setShowUnavailForm(!showUnavailForm)}
+                  className="flex items-center gap-1.5 text-sm text-opti-blue hover:text-opti-red font-semibold transition-colors cursor-pointer"
+                >
                   <CalendarPlus className="w-4 h-4" />
-                  Ajouter
+                  {showUnavailForm ? "Annuler" : "Ajouter"}
                 </button>
               </div>
+
+              {/* Formulaire d'ajout */}
+              {showUnavailForm && (
+                <div className="mb-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-opti-blue mb-1">Type</label>
+                    <select
+                      value={unavailForm.type}
+                      onChange={(e) => setUnavailForm({ ...unavailForm, type: e.target.value as DriverUnavailability["type"] })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue bg-white focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                    >
+                      <option value="CONGES_ANNUELS">Congés annuels</option>
+                      <option value="FORMATION">Formation</option>
+                      <option value="MALADIE">Arrêt maladie</option>
+                      <option value="AUTRE">Autre</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-opti-blue mb-1">Début</label>
+                      <input
+                        type="date"
+                        value={unavailForm.startDate}
+                        onChange={(e) => setUnavailForm({ ...unavailForm, startDate: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-opti-blue mb-1">Fin</label>
+                      <input
+                        type="date"
+                        value={unavailForm.endDate}
+                        onChange={(e) => setUnavailForm({ ...unavailForm, endDate: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-opti-blue mb-1">Note (optionnel)</label>
+                    <input
+                      type="text"
+                      value={unavailForm.note}
+                      onChange={(e) => setUnavailForm({ ...unavailForm, note: e.target.value })}
+                      placeholder="Raison, détails..."
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                    />
+                  </div>
+                  <button
+                    onClick={handleAddUnavailability}
+                    disabled={savingUnavail || !unavailForm.startDate || !unavailForm.endDate}
+                    className="w-full py-2 rounded-xl text-sm font-semibold text-white bg-opti-red hover:bg-opti-red-dark transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingUnavail ? "Enregistrement..." : "Ajouter la période"}
+                  </button>
+                </div>
+              )}
 
               {(driver.unavailabilities || []).length > 0 ? (
                 <div className="space-y-3">
@@ -260,13 +350,46 @@ export default function DriverDetail({ driver, onUpdate }: DriverDetailProps) {
             </div>
 
             {/* Action Buttons */}
-            <button className="w-full flex items-center justify-center gap-2 bg-opti-red text-white px-5 py-3 rounded-xl text-sm font-semibold hover:bg-opti-red-dark transition-colors cursor-pointer">
+            <button
+              onClick={async () => {
+                setSaving(true);
+                const data = {
+                  firstName: driver.firstName,
+                  lastName: driver.lastName,
+                  email: driver.email,
+                  phone: driver.phone,
+                  role: driver.role,
+                  regime: driver.regime,
+                  nightWorkAuthorized: driver.nightWorkAuthorized,
+                  licenseTypes: driver.licenseTypes,
+                  languages: driver.languages,
+                  employeeId: driver.employeeId,
+                  seniority: driver.seniority,
+                };
+                await updateDriver(driver.id, data);
+                setSaving(false);
+              }}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 bg-opti-red text-white px-5 py-3 rounded-xl text-sm font-semibold hover:bg-opti-red-dark transition-colors cursor-pointer disabled:opacity-50"
+            >
               <Save className="w-4 h-4" />
-              Enregistrer les modifications
+              {saving ? "Enregistrement..." : "Enregistrer les modifications"}
             </button>
-            <button className="w-full flex items-center justify-center gap-2 text-opti-red hover:text-opti-red-dark text-sm font-semibold transition-colors cursor-pointer">
+            <button
+              onClick={async () => {
+                if (!confirm(`Êtes-vous sûr de vouloir supprimer le compte de ${driver.firstName} ${driver.lastName} ? Cette action est irréversible.`)) return;
+                setDeleting(true);
+                const success = await deleteDriver(driver.id);
+                setDeleting(false);
+                if (success) {
+                  router.push("/conducteurs-flotte");
+                }
+              }}
+              disabled={deleting}
+              className="w-full flex items-center justify-center gap-2 text-opti-red hover:text-opti-red-dark text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            >
               <Trash2 className="w-4 h-4" />
-              Supprimer le compte
+              {deleting ? "Suppression..." : "Supprimer le compte"}
             </button>
           </div>
         </div>

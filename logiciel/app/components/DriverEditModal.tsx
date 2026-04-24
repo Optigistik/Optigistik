@@ -18,7 +18,6 @@ const emptyForm = {
   email: "",
   phone: "",
   role: "",
-  fleet: "",
   regime: "AUTRE_PERSONNEL" as DriverRegime,
   nightWorkAuthorized: false,
   licenseTypes: "",
@@ -39,7 +38,6 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
           email: driver.email,
           phone: driver.phone,
           role: driver.role,
-          fleet: driver.fleet,
           regime: driver.regime as DriverRegime,
           nightWorkAuthorized: driver.nightWorkAuthorized,
           licenseTypes: (driver.licenseTypes || []).join(", "),
@@ -68,7 +66,6 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
       email: form.email,
       phone: form.phone,
       role: form.role,
-      fleet: form.fleet,
       regime: form.regime,
       nightWorkAuthorized: form.nightWorkAuthorized,
       licenseTypes: form.licenseTypes.split(",").map((s) => s.trim()).filter(Boolean),
@@ -125,31 +122,31 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Identité */}
           <fieldset>
-            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Identité
             </legend>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">Prénom</label>
+                <label className="block text-sm font-semibold text-opti-blue mb-1">Prénom</label>
                 <input
                   type="text"
                   value={form.firstName}
                   onChange={(e) => handleChange("firstName", e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">Nom</label>
+                <label className="block text-sm font-semibold text-opti-blue mb-1">Nom</label>
                 <input
                   type="text"
                   value={form.lastName}
                   onChange={(e) => handleChange("lastName", e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
             </div>
@@ -157,83 +154,65 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
 
           {/* Contact */}
           <fieldset>
-            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Contact
             </legend>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">Email</label>
+                <label className="block text-sm font-semibold text-opti-blue mb-1">Email</label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">Téléphone</label>
+                <label className="block text-sm font-semibold text-opti-blue mb-1">Téléphone</label>
                 <input
                   type="tel"
                   value={form.phone}
                   onChange={(e) => handleChange("phone", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
             </div>
           </fieldset>
 
-          {/* Poste */}
+          {/* Poste + Profil Contractuel */}
           <fieldset>
-            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-              Poste
+            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+              Poste & Profil Contractuel
             </legend>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">Rôle</label>
+                <label className="block text-sm font-semibold text-opti-blue mb-1">Rôle</label>
                 <input
                   type="text"
                   value={form.role}
                   onChange={(e) => handleChange("role", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">Flotte</label>
-                <input
-                  type="text"
-                  value={form.fleet}
-                  onChange={(e) => handleChange("fleet", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          {/* Profil Contractuel — Champs du ticket Jira */}
-          <fieldset>
-            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-              Profil Contractuel
-            </legend>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">
+                <label className="block text-sm font-semibold text-opti-blue mb-1">
                   Régime
                 </label>
                 <select
                   value={form.regime}
                   onChange={(e) => handleChange("regime", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors bg-white"
                 >
                   <option value="GRAND_ROUTIER">Grand Routier</option>
                   <option value="AUTRE_PERSONNEL">Autre personnel</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-3">
+                <label className="block text-sm font-semibold text-opti-blue mb-1">
                   Travail de nuit
                 </label>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer mt-1">
                   <input
                     type="checkbox"
                     checked={form.nightWorkAuthorized}
@@ -251,12 +230,12 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
 
           {/* Infos Techniques */}
           <fieldset>
-            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+            <legend className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Informations Techniques
             </legend>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">
+                <label className="block text-sm font-semibold text-opti-blue mb-1">
                   Types de permis
                 </label>
                 <input
@@ -264,11 +243,11 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
                   value={form.licenseTypes}
                   onChange={(e) => handleChange("licenseTypes", e.target.value)}
                   placeholder="Permis C, CE, FIMO"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-opti-blue mb-1.5">
+                <label className="block text-sm font-semibold text-opti-blue mb-1">
                   Langues
                 </label>
                 <input
@@ -276,7 +255,7 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
                   value={form.languages}
                   onChange={(e) => handleChange("languages", e.target.value)}
                   placeholder="Français, Anglais"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-opti-blue focus:outline-none focus:ring-2 focus:ring-opti-red/20 focus:border-opti-red transition-colors"
                 />
               </div>
             </div>
@@ -320,7 +299,7 @@ export default function DriverEditModal({ driver, isOpen, onClose, onSave }: Dri
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
             <button
               type="button"
               onClick={onClose}

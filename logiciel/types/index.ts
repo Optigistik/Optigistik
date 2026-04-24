@@ -105,7 +105,6 @@ export interface Driver {
 
   // Rattachement
   role: string;
-  fleet: string;
 
   status: DriverStatus;
   unavailabilities: DriverUnavailability[];
