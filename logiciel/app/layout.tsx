@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Portail Transporteur B2B",
 };
 
+import { AuthProvider } from "@/app/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${archivoBlack.variable} ${openSans.variable} font-sans antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

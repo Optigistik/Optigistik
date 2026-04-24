@@ -8,14 +8,16 @@ interface SidebarProps {
   onLogout: () => void;
   isCollapsed: boolean;
   toggleSidebar: () => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
+export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar, activeTab, setActiveTab }: SidebarProps) {
   const menuItems = [
-    { name: "Accueil", icon: Home, active: true },
-    { name: "Conducteurs & Flotte", icon: Truck, active: false },
-    { name: "Tournées & Abonnements", icon: MapIcon, active: false },
-    { name: "Gestion des clients", icon: Users, active: false },
+    { id: "home", name: "Accueil", icon: Home },
+    { id: "fleet", name: "Conducteurs & Flotte", icon: Truck },
+    { id: "tours", name: "Tournées & Abonnements", icon: MapIcon },
+    { id: "clients", name: "Gestion des clients", icon: Users },
   ];
 
   return (
@@ -36,27 +38,31 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
 
       {/* Navigation */}
       <nav className="flex-1 space-y-4">
-        {menuItems.map((item) => (
-          <button
-            key={item.name}
-            className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-              item.active
-                ? "bg-red-50 text-opti-red font-bold"
-                : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
-            }`}
-            title={isCollapsed ? item.name : ""}
-          >
-            <item.icon
-              className={`w-5 h-5 shrink-0 ${
-                item.active ? "text-opti-red" : "text-opti-blue"
+        {menuItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+                isActive
+                  ? "bg-red-50 text-opti-red font-bold"
+                  : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
               }`}
-            />
+              title={isCollapsed ? item.name : ""}
+            >
+              <item.icon
+                className={`w-5 h-5 shrink-0 ${
+                  isActive ? "text-opti-red" : "text-opti-blue"
+                }`}
+              />
 
-            {!isCollapsed && (
-              <span className="text-sm truncate">{item.name}</span>
-            )}
-          </button>
-        ))}
+              {!isCollapsed && (
+                <span className="text-sm truncate">{item.name}</span>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {/* User Profile (Bottom) */}
