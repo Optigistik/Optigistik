@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { Vehicle, VehicleType, Specialty, saveVehicle, checkFutureTours } from "@/services/fleet";
+import { Vehicle, VehicleType, Specialty, Motorization, saveVehicle, checkFutureTours } from "@/services/fleet";
 import { AlertTriangle, X } from "lucide-react";
 
 interface VehicleFormProps {
   initialData: Vehicle | null;
   vehicleTypes: VehicleType[];
   specialties: Specialty[];
+  motorizations: Motorization[];
   onCancel: () => void;
   onSuccess: () => void;
 }
 
-export default function VehicleForm({ initialData, vehicleTypes, specialties, onCancel, onSuccess }: VehicleFormProps) {
+export default function VehicleForm({ initialData, vehicleTypes, specialties, motorizations, onCancel, onSuccess }: VehicleFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -253,13 +254,16 @@ export default function VehicleForm({ initialData, vehicleTypes, specialties, on
 
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Motorisation *</label>
-            <input 
-              type="text" 
+            <select 
               value={motorization}
               onChange={e => setMotorization(e.target.value)}
-              placeholder="ex: Diesel Euro 6"
-              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
-            />
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none bg-white"
+            >
+              <option value="">Sélectionner...</option>
+              {motorizations.map(m => (
+                <option key={m.id} value={m.name}>{m.name}</option>
+              ))}
+            </select>
           </div>
 
           <div>

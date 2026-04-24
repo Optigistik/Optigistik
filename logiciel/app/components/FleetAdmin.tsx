@@ -1,22 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { VehicleType, Specialty, saveVehicleType, deleteVehicleType, saveSpecialty, deleteSpecialty, seedSpecialties } from "@/services/fleet";
-import { Plus, Edit2, Trash2, X, Check } from "lucide-react";
+import { VehicleType, Specialty, Motorization, saveVehicleType, deleteVehicleType, saveSpecialty, deleteSpecialty, seedSpecialties, saveMotorization, deleteMotorization, seedMotorizations } from "@/services/fleet";
+import { Plus, Edit2, Trash2, X, Check, RefreshCw } from "lucide-react";
 
 interface FleetAdminProps {
   types: VehicleType[];
   specialties: Specialty[];
+  motorizations: Motorization[];
   onRefresh: () => void;
 }
 
-export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdminProps) {
+export default function FleetAdmin({ types, specialties, motorizations, onRefresh }: FleetAdminProps) {
   const [editingType, setEditingType] = useState<Partial<VehicleType> | null>(null);
   const [editingSpecialty, setEditingSpecialty] = useState<Partial<Specialty> | null>(null);
+  const [editingMotor, setEditingMotor] = useState<Partial<Motorization> | null>(null);
   
   const [newTypeName, setNewTypeName] = useState("");
   const [newTypeDesc, setNewTypeDesc] = useState("");
   const [newSpecName, setNewSpecName] = useState("");
+  const [newMotorName, setNewMotorName] = useState("");
 
   const handleSaveType = async () => {
     if (!newTypeName.trim()) return;
@@ -46,6 +49,19 @@ export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdmin
     }
   };
 
+  const handleSaveMotor = async () => {
+    if (!newMotorName.trim()) return;
+    const success = await saveMotorization({
+      id: editingMotor?.id,
+      name: newMotorName
+    });
+    if (success) {
+      setEditingMotor(null);
+      setNewMotorName("");
+      onRefresh();
+    }
+  };
+
   const handleDeleteType = async (id: string) => {
     if (confirm("Supprimer ce type de véhicule ? Cela pourrait impacter les camions existants.")) {
       await deleteVehicleType(id);
@@ -60,15 +76,29 @@ export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdmin
     }
   };
 
-  const handleSeed = async () => {
+  const handleDeleteMotor = async (id: string) => {
+    if (confirm("Supprimer cette motorisation ?")) {
+      await deleteMotorization(id);
+      onRefresh();
+    }
+  };
+
+  const handleSeedSpec = async () => {
     if (confirm("Voulez-vous importer les 8 spécialités par défaut (ADR, Frigo, etc.) ?")) {
       await seedSpecialties();
       onRefresh();
     }
   };
 
+  const handleSeedMotor = async () => {
+    if (confirm("Voulez-vous importer les motorisations par défaut (Diesel, Essence, Electrique) ?")) {
+      await seedMotorizations();
+      onRefresh();
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Gestion des Types */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -78,7 +108,7 @@ export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdmin
           </h4>
           {!editingType && (
             <button 
-              onClick={() => setEditingType({})}
+              onClick={() => { setEditingType({}); setNewTypeName(""); setNewTypeDesc(""); }}
               className="text-opti-red hover:bg-red-50 p-1 rounded-full transition-colors"
             >
               <Plus className="w-5 h-5" />
@@ -136,6 +166,74 @@ export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdmin
         </div>
       </div>
 
+      {/* Gestion des Motorisations */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="font-bold text-opti-blue flex items-center gap-2">
+            Motorisations
+            <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full">{motorizations.length}</span>
+          </h4>
+          {!editingMotor && (
+            <button 
+              onClick={() => { setEditingMotor({}); setNewMotorName(""); }}
+              className="text-opti-red hover:bg-red-50 p-1 rounded-full transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          {editingMotor && (
+            <div className="p-4 bg-red-50 rounded-xl border border-red-100 space-y-3 animate-fade-in">
+              <input 
+                type="text"
+                placeholder="Nom (ex: Diesel)"
+                value={newMotorName}
+                onChange={e => setNewMotorName(e.target.value)}
+                className="w-full p-2 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-opti-red"
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setEditingMotor(null)} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                <button onClick={handleSaveMotor} className="p-1 text-green-600 hover:text-green-700"><Check className="w-5 h-5" /></button>
+              </div>
+            </div>
+          )}
+
+          {motorizations.map(motor => (
+            <div key={motor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100">
+              <p className="text-sm font-bold text-opti-blue">{motor.name}</p>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => {
+                    setEditingMotor(motor);
+                    setNewMotorName(motor.name);
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-opti-blue"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => handleDeleteMotor(motor.id)} className="p-1.5 text-gray-400 hover:text-opti-red">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {motorizations.length === 0 && !editingMotor && (
+            <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-xl">
+              <p className="text-xs text-gray-400 mb-4">Aucune motorisation.</p>
+              <button 
+                onClick={handleSeedMotor}
+                className="text-[10px] font-bold text-opti-red hover:underline uppercase tracking-widest"
+              >
+                Initialiser (Diesel, ...)
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Gestion des Spécialités */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -145,7 +243,7 @@ export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdmin
           </h4>
           {!editingSpecialty && (
             <button 
-              onClick={() => setEditingSpecialty({})}
+              onClick={() => { setEditingSpecialty({}); setNewSpecName(""); }}
               className="text-opti-red hover:bg-red-50 p-1 rounded-full transition-colors"
             >
               <Plus className="w-5 h-5" />
@@ -192,12 +290,12 @@ export default function FleetAdmin({ types, specialties, onRefresh }: FleetAdmin
 
           {specialties.length === 0 && !editingSpecialty && (
             <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-xl">
-              <p className="text-xs text-gray-400 mb-4">Aucune spécialité configurée.</p>
+              <p className="text-xs text-gray-400 mb-4">Aucune spécialité.</p>
               <button 
-                onClick={handleSeed}
+                onClick={handleSeedSpec}
                 className="text-[10px] font-bold text-opti-red hover:underline uppercase tracking-widest"
               >
-                Initialiser avec les valeurs par défaut
+                Initialiser (ADR, ...)
               </button>
             </div>
           )}

@@ -23,6 +23,11 @@ export interface Specialty {
   name: string;
 }
 
+export interface Motorization {
+  id: string;
+  name: string;
+}
+
 export interface Vehicle {
   id: string;
   name: string;
@@ -107,6 +112,57 @@ export const deleteSpecialty = async (id: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Error deleting specialty:", error);
+    return false;
+  }
+};
+
+export const getMotorizations = async (): Promise<Motorization[]> => {
+  try {
+    const q = query(collection(db, "motorizations"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Motorization));
+  } catch (error) {
+    console.error("Error fetching motorizations:", error);
+    return [];
+  }
+};
+
+export const saveMotorization = async (motorization: Partial<Motorization>): Promise<boolean> => {
+  try {
+    const { id, ...data } = motorization;
+    if (id) {
+      await updateDoc(doc(db, "motorizations", id), data);
+    } else {
+      const newDocRef = doc(collection(db, "motorizations"));
+      await setDoc(newDocRef, data);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error saving motorization:", error);
+    return false;
+  }
+};
+
+export const deleteMotorization = async (id: string): Promise<boolean> => {
+  try {
+    await deleteDoc(doc(db, "motorizations", id));
+    return true;
+  } catch (error) {
+    console.error("Error deleting motorization:", error);
+    return false;
+  }
+};
+
+export const seedMotorizations = async (): Promise<boolean> => {
+  const defaults = ["Diesel", "Essence", "Electrique"];
+  try {
+    for (const name of defaults) {
+      const newDocRef = doc(collection(db, "motorizations"));
+      await setDoc(newDocRef, { name });
+    }
+    return true;
+  } catch (error) {
+    console.error("Error seeding motorizations:", error);
     return false;
   }
 };

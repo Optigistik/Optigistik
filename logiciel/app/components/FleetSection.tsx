@@ -5,7 +5,7 @@ import FleetList from "./FleetList";
 import FleetDetail from "./FleetDetail";
 import VehicleForm from "./VehicleForm";
 import FleetAdmin from "./FleetAdmin";
-import { getVehicleTypes, Vehicle, VehicleType, Specialty, getSpecialties, subscribeToVehicles } from "@/services/fleet";
+import { getVehicleTypes, Vehicle, VehicleType, Specialty, getSpecialties, subscribeToVehicles, Motorization, getMotorizations } from "@/services/fleet";
 import { useAuth } from "@/app/context/AuthContext";
 import { ShieldAlert, Clock, Settings } from "lucide-react";
 
@@ -19,6 +19,7 @@ export default function FleetSection() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [motorizations, setMotorizations] = useState<Motorization[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
 
@@ -26,12 +27,14 @@ export default function FleetSection() {
     if (showLoader) setLoading(true);
     setDbError(null);
     try {
-      const [fetchedTypes, fetchedSpecialties] = await Promise.all([
+      const [fetchedTypes, fetchedSpecialties, fetchedMotors] = await Promise.all([
         getVehicleTypes(),
-        getSpecialties()
+        getSpecialties(),
+        getMotorizations()
       ]);
       setVehicleTypes(fetchedTypes);
       setSpecialties(fetchedSpecialties);
+      setMotorizations(fetchedMotors);
     } catch (err: any) {
       setDbError("Erreur chargement config: " + err.message);
     }
@@ -170,6 +173,7 @@ export default function FleetSection() {
               initialData={selectedVehicle}
               vehicleTypes={vehicleTypes}
               specialties={specialties}
+              motorizations={motorizations}
               onCancel={handleBackToList}
               onSuccess={handleFormSuccess}
             />
@@ -190,6 +194,7 @@ export default function FleetSection() {
                 <FleetAdmin 
                   types={vehicleTypes} 
                   specialties={specialties} 
+                  motorizations={motorizations}
                   onRefresh={fetchData} 
                 />
               </div>
