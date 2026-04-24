@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo_Black, Open_Sans } from "next/font/google";
+import { AuthProvider } from "./contexts/AuthContext";
 import "./globals.css";
 
 const archivoBlack = Archivo_Black({
@@ -28,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${archivoBlack.variable} ${openSans.variable} font-sans antialiased`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

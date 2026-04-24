@@ -1,6 +1,8 @@
 "use client";
 
-import { Home, Truck, Map as MapIcon, Users, Menu, LogOut } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, Truck, Map as MapIcon, Users, Calendar, Menu, LogOut } from "lucide-react";
 import { User } from "firebase/auth";
 
 interface SidebarProps {
@@ -10,13 +12,22 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
+const menuItems = [
+  { name: "Accueil", icon: Home, href: "/accueil" },
+  { name: "Conducteurs & Flotte", icon: Truck, href: "/conducteurs-flotte" },
+  { name: "Tournées & Abonnements", icon: MapIcon, href: "#" },
+  { name: "Gestion des clients", icon: Users, href: "#" },
+  { name: "Planification", icon: Calendar, href: "#" },
+];
+
 export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
-  const menuItems = [
-    { name: "Accueil", icon: Home, active: true },
-    { name: "Conducteurs & Flotte", icon: Truck, active: false },
-    { name: "Tournées & Abonnements", icon: MapIcon, active: false },
-    { name: "Gestion des clients", icon: Users, active: false },
-  ];
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "#") return false;
+    if (href === "/accueil") return pathname === "/accueil";
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   return (
     <aside
@@ -36,27 +47,31 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
 
       {/* Navigation */}
       <nav className="flex-1 space-y-4">
-        {menuItems.map((item) => (
-          <button
-            key={item.name}
-            className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-              item.active
-                ? "bg-red-50 text-opti-red font-bold"
-                : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
-            }`}
-            title={isCollapsed ? item.name : ""}
-          >
-            <item.icon
-              className={`w-5 h-5 shrink-0 ${
-                item.active ? "text-opti-red" : "text-opti-blue"
+        {menuItems.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+                active
+                  ? "bg-red-50 text-opti-red font-bold"
+                  : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
               }`}
-            />
+              title={isCollapsed ? item.name : ""}
+            >
+              <item.icon
+                className={`w-5 h-5 shrink-0 ${
+                  active ? "text-opti-red" : "text-opti-blue"
+                }`}
+              />
 
-            {!isCollapsed && (
-              <span className="text-sm truncate">{item.name}</span>
-            )}
-          </button>
-        ))}
+              {!isCollapsed && (
+                <span className="text-sm truncate">{item.name}</span>
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* User Profile (Bottom) */}

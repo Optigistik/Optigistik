@@ -61,3 +61,53 @@ export interface Route {
     totalTimeSeconds: number;
   };
 }
+
+// 5. Les Conducteurs
+export type DriverRegime = "GRAND_ROUTIER" | "AUTRE_PERSONNEL";
+export type DriverStatus = "EN_MISSION" | "DISPONIBLE" | "INDISPONIBLE";
+
+export interface DriverUnavailability {
+  id: string;
+  type: "CONGES_ANNUELS" | "FORMATION" | "MALADIE" | "AUTRE";
+  label: string;
+  startDate: string;
+  endDate: string;
+  approvedBy?: string;
+  note?: string;
+}
+
+export interface AssignedVehicle {
+  vehicleId: string;
+  label: string;
+  role: "PRINCIPAL" | "REMPLACEMENT";
+  isActive: boolean;
+  lastMaintenance?: string;
+}
+
+export interface Driver {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string;
+
+  // Profil contractuel (ticket Jira)
+  regime: DriverRegime;
+  nightWorkAuthorized: boolean;
+
+  // Infos techniques
+  licenseTypes: string[];
+  licenseExpiry?: string;
+  employeeId: string;
+  seniority: string;
+  languages: string[];
+
+  // Rattachement
+  role: string;
+  fleet: string;
+
+  status: DriverStatus;
+  unavailabilities: DriverUnavailability[];
+  assignedVehicles: AssignedVehicle[];
+}
