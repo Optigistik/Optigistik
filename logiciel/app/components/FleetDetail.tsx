@@ -1,5 +1,5 @@
 import { ArrowLeft, Edit2, Trash2, Settings, AlertTriangle, CheckCircle2, X, Clock, Wrench, Plus } from "lucide-react";
-import { Vehicle, VehicleType, saveVehicle, checkFutureTours, deleteVehicle, MaintenanceLog, getMaintenanceLogs, addMaintenanceLog, updateMaintenanceLog } from "@/services/fleet";
+import { Vehicle, VehicleType, saveVehicle, checkFutureTours, deleteVehicle, MaintenanceLog, getMaintenanceLogs, addMaintenanceLog, updateMaintenanceLog, deleteMaintenanceLog } from "@/services/fleet";
 import { UserRole } from "@/app/context/AuthContext";
 import { useState, useEffect } from "react";
 import MaintenanceTimeline from "./MaintenanceTimeline";
@@ -131,6 +131,17 @@ export default function FleetDetail({ vehicle, vehicleTypes, onBack, onEdit, onR
     setLogToEdit(null);
     setNewLogDescription("");
     fetchLogs();
+  };
+
+  const handleDeleteLog = async (logId: string) => {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
+      const success = await deleteMaintenanceLog(logId);
+      if (success) {
+        fetchLogs();
+      } else {
+        setError("Erreur lors de la suppression de l'événement.");
+      }
+    }
   };
 
   const handleOpenEditLog = (log: MaintenanceLog) => {
@@ -270,7 +281,7 @@ export default function FleetDetail({ vehicle, vehicleTypes, onBack, onEdit, onR
                 Historique de Maintenance
               </h3>
               <div className="flex items-center gap-4">
-                {userRole.toLowerCase() === 'admin' && (
+                {userRole !== 'membre' && (
                   <button 
                     onClick={handleOpenAddLog}
                     className="bg-opti-red hover:bg-red-700 text-white p-1 rounded-full transition-colors"
@@ -290,7 +301,7 @@ export default function FleetDetail({ vehicle, vehicleTypes, onBack, onEdit, onR
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-opti-red"></div>
               </div>
             ) : (
-              <MaintenanceTimeline logs={logs} onEdit={handleOpenEditLog} userRole={userRole} />
+              <MaintenanceTimeline logs={logs} onEdit={handleOpenEditLog} onDelete={handleDeleteLog} userRole={userRole} />
             )}
           </div>
         </div>

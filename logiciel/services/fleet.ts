@@ -18,6 +18,11 @@ export interface VehicleType {
   description?: string;
 }
 
+export interface Specialty {
+  id: string;
+  name: string;
+}
+
 export interface Vehicle {
   id: string;
   name: string;
@@ -40,6 +45,85 @@ export const getVehicleTypes = async (): Promise<VehicleType[]> => {
   } catch (error) {
     console.error("Error fetching vehicle types:", error);
     return [];
+  }
+};
+
+export const saveVehicleType = async (type: Partial<VehicleType>): Promise<boolean> => {
+  try {
+    const { id, ...data } = type;
+    if (id) {
+      await updateDoc(doc(db, "vehicle_types", id), data);
+    } else {
+      const newDocRef = doc(collection(db, "vehicle_types"));
+      await setDoc(newDocRef, data);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error saving vehicle type:", error);
+    return false;
+  }
+};
+
+export const deleteVehicleType = async (id: string): Promise<boolean> => {
+  try {
+    await deleteDoc(doc(db, "vehicle_types", id));
+    return true;
+  } catch (error) {
+    console.error("Error deleting vehicle type:", error);
+    return false;
+  }
+};
+
+export const getSpecialties = async (): Promise<Specialty[]> => {
+  try {
+    const q = query(collection(db, "specialties"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Specialty));
+  } catch (error) {
+    console.error("Error fetching specialties:", error);
+    return [];
+  }
+};
+
+export const saveSpecialty = async (specialty: Partial<Specialty>): Promise<boolean> => {
+  try {
+    const { id, ...data } = specialty;
+    if (id) {
+      await updateDoc(doc(db, "specialties", id), data);
+    } else {
+      const newDocRef = doc(collection(db, "specialties"));
+      await setDoc(newDocRef, data);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error saving specialty:", error);
+    return false;
+  }
+};
+
+export const deleteSpecialty = async (id: string): Promise<boolean> => {
+  try {
+    await deleteDoc(doc(db, "specialties", id));
+    return true;
+  } catch (error) {
+    console.error("Error deleting specialty:", error);
+    return false;
+  }
+};
+
+export const seedSpecialties = async (): Promise<boolean> => {
+  const defaults = [
+    "ADR", "HAYON", "GRUE", "CONVOI", "FRIGO", "SAVOYARDE", "SÉCURISÉ", "DOUBLE ÉTAGE"
+  ];
+  try {
+    for (const name of defaults) {
+      const newDocRef = doc(collection(db, "specialties"));
+      await setDoc(newDocRef, { name });
+    }
+    return true;
+  } catch (error) {
+    console.error("Error seeding specialties:", error);
+    return false;
   }
 };
 
@@ -193,6 +277,17 @@ export const updateMaintenanceLog = async (logId: string, data: Partial<Maintena
     return true;
   } catch (error) {
     console.error("Error updating maintenance log:", error);
+    return false;
+  }
+};
+
+export const deleteMaintenanceLog = async (logId: string): Promise<boolean> => {
+  try {
+    const docRef = doc(db, "maintenance_logs", logId);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting maintenance log:", error);
     return false;
   }
 };

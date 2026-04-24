@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import FleetList from "./FleetList";
 import FleetDetail from "./FleetDetail";
 import VehicleForm from "./VehicleForm";
-import { getVehicleTypes, Vehicle, VehicleType, subscribeToVehicles } from "@/services/fleet";
+import FleetAdmin from "./FleetAdmin";
+import { getVehicleTypes, Vehicle, VehicleType, Specialty, getSpecialties, subscribeToVehicles } from "@/services/fleet";
 import { useAuth } from "@/app/context/AuthContext";
-import { ShieldAlert, Clock } from "lucide-react";
+import { ShieldAlert, Clock, Settings } from "lucide-react";
 
-type ViewState = "list" | "detail" | "form";
+type ViewState = "list" | "detail" | "form" | "admin";
 
 export default function FleetSection() {
   const [view, setView] = useState<ViewState>("list");
@@ -17,6 +18,7 @@ export default function FleetSection() {
   
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
 
@@ -24,10 +26,14 @@ export default function FleetSection() {
     if (showLoader) setLoading(true);
     setDbError(null);
     try {
-      const fetchedTypes = await getVehicleTypes();
+      const [fetchedTypes, fetchedSpecialties] = await Promise.all([
+        getVehicleTypes(),
+        getSpecialties()
+      ]);
       setVehicleTypes(fetchedTypes);
+      setSpecialties(fetchedSpecialties);
     } catch (err: any) {
-      setDbError("Erreur types: " + err.message);
+      setDbError("Erreur chargement config: " + err.message);
     }
     if (showLoader) setLoading(false);
   };
@@ -111,6 +117,15 @@ export default function FleetSection() {
         <div className="mb-6 flex gap-4 border-b border-gray-200">
           <button className="py-2 px-4 text-gray-500 font-medium">Conducteurs</button>
           <button className="py-2 px-4 text-opti-red border-b-2 border-opti-red font-bold">Flotte de véhicules</button>
+          {userRole.toLowerCase() === 'admin' && (
+            <button 
+              onClick={() => setView("admin")}
+              className="py-1.5 px-3 bg-gray-100 text-gray-600 hover:bg-opti-blue hover:text-white rounded-lg transition-all ml-auto flex items-center gap-2 text-xs font-bold shadow-sm"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              CONFIGURATION
+            </button>
+          )}
         </div>
       )}
 
@@ -154,9 +169,31 @@ export default function FleetSection() {
             <VehicleForm
               initialData={selectedVehicle}
               vehicleTypes={vehicleTypes}
+              specialties={specialties}
               onCancel={handleBackToList}
               onSuccess={handleFormSuccess}
             />
+          )}
+
+          {view === "admin" && (
+            <div className="space-y-4">
+              <button 
+                onClick={handleBackToList}
+                className="flex items-center gap-2 text-gray-500 hover:text-opti-blue transition-colors font-bold text-sm"
+              >
+                ← Retour à la liste
+              </button>
+              <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 className="text-lg font-bold text-opti-blue mb-4">Configuration de la Flotte</h3>
+                <p className="text-gray-500 mb-6">Gérez ici les types de véhicules et les spécialités disponibles.</p>
+                {/* Je vais créer le composant FleetAdmin juste après */}
+                <FleetAdmin 
+                  types={vehicleTypes} 
+                  specialties={specialties} 
+                  onRefresh={fetchData} 
+                />
+              </div>
+            </div>
           )}
         </>
       )}

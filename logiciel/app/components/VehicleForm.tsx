@@ -1,26 +1,16 @@
 import { useState } from "react";
-import { Vehicle, VehicleType, saveVehicle, checkFutureTours } from "@/services/fleet";
+import { Vehicle, VehicleType, Specialty, saveVehicle, checkFutureTours } from "@/services/fleet";
 import { AlertTriangle, X } from "lucide-react";
 
 interface VehicleFormProps {
   initialData: Vehicle | null;
   vehicleTypes: VehicleType[];
+  specialties: Specialty[];
   onCancel: () => void;
   onSuccess: () => void;
 }
 
-const SPECIALTIES = [
-  "ADR",
-  "HAYON",
-  "GRUE",
-  "CONVOI",
-  "FRIGO",
-  "SAVOYARDE",
-  "SÉCURISÉ",
-  "DOUBLE ÉTAGE"
-];
-
-export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuccess }: VehicleFormProps) {
+export default function VehicleForm({ initialData, vehicleTypes, specialties, onCancel, onSuccess }: VehicleFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -43,13 +33,41 @@ export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuc
 
   // Formatage de la plaque (SIV Français : AB-123-CD)
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    let formatted = '';
-    if (value.length > 0) formatted += value.substring(0, 2);
-    if (value.length > 2) formatted += '-' + value.substring(2, 5);
-    if (value.length > 5) formatted += '-' + value.substring(5, 7);
-    setPlate(formatted);
+    let val = e.target.value.toUpperCase();
+    
+    // Autoriser seulement A-Z, 0-9 et -
+    val = val.replace(/[^A-Z0-9-]/g, '');
+
+    // Si on efface, on ne fait pas d'auto-formatage
+    if (val.length < plate.length) {
+      setPlate(val);
+      return;
+    }
+
+    // Auto-insertion intelligente du tiret
+    const clean = val.replace(/-/g, '');
+    if (clean.length === 2 && val.length === 2) val += '-';
+    if (clean.length === 5 && val.length === 6) val += '-';
+
+    setPlate(val.substring(0, 9));
   };
+
+  // Validation en temps réel du format SIV
+  const isPlateValid = plate.length === 0 || /^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/.test(plate);
+
+  // Validation en temps réel des dimensions
+  const getDimensionsError = () => {
+    if (dimensions.length === 0) return null;
+    const numbers = dimensions.replace(',', '.').match(/\d+(\.\d+)?/g);
+    if (!numbers || numbers.length < 2) {
+      return "Il faut au moins deux nombres (ex: 13.6 / 4)";
+    }
+    return null;
+  };
+  const dimensionsError = getDimensionsError();
+
+  // Validation en temps réel de la capacité
+  const isCapacityValid = capacity.length === 0 || (/^\d+$/.test(capacity) && parseInt(capacity, 10) > 0);
 
   // Formatage des dimensions à la perte du focus (onBlur)
   const handleDimensionsBlur = () => {
@@ -83,6 +101,20 @@ export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuc
 
     if (missingFields.length > 0) {
       setError(`Veuillez remplir les champs obligatoires : ${missingFields.join(', ')}`);
+      return;
+    }
+
+    // Validation du format de la plaque
+    const plateRegex = /^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/;
+    if (!plateRegex.test(plate)) {
+      setError("Le format de la plaque est incorrect. Format attendu : AB-123-CD");
+      return;
+    }
+
+    // Validation du format des dimensions
+    const dimensionsRegex = /^\d+(\.\d+)?m \/ \d+(\.\d+)?m$/;
+    if (!dimensionsRegex.test(dimensions)) {
+      setError("Le format des dimensions est incorrect. Exemple attendu : 13.6m / 4.0m (Utilisez le point pour les décimales)");
       return;
     }
 
@@ -173,21 +205,33 @@ export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuc
               value={plate}
               onChange={handlePlateChange}
               placeholder="ex: AB-123-CD"
-              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+              className={`w-full border rounded-lg p-3 text-opti-blue font-medium outline-none transition-all ${!isPlateValid ? 'border-opti-red ring-1 ring-opti-red' : 'border-gray-300 focus:ring-2 focus:ring-opti-red'}`}
             />
+            {!isPlateValid && (
+              <p className="text-[10px] text-opti-red font-bold mt-1 uppercase animate-fade-in">
+                Format attendu : 2 lettres - 3 chiffres - 2 lettres
+              </p>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Capacité en Palettes *</label>
             <input 
-              type="number" 
+              type="text" 
               value={capacity}
-              onChange={e => setCapacity(e.target.value)}
+              onChange={e => {
+                // On n'autorise que la saisie de chiffres
+                const val = e.target.value.replace(/\D/g, '');
+                setCapacity(val);
+              }}
               placeholder="ex: 33"
-              min="1"
-              step="1"
-              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+              className={`w-full border rounded-lg p-3 text-opti-blue font-medium outline-none transition-all ${!isCapacityValid ? 'border-opti-red ring-1 ring-opti-red' : 'border-gray-300 focus:ring-2 focus:ring-opti-red'}`}
             />
+            {!isCapacityValid && (
+              <p className="text-[10px] text-opti-red font-bold mt-1 uppercase animate-fade-in">
+                Veuillez entrer un nombre entier positif
+              </p>
+            )}
           </div>
 
           <div>
@@ -198,8 +242,13 @@ export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuc
               onChange={e => setDimensions(e.target.value)}
               onBlur={handleDimensionsBlur}
               placeholder="ex: 13.6m / 4.0m"
-              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+              className={`w-full border rounded-lg p-3 text-opti-blue font-medium outline-none transition-all ${dimensionsError ? 'border-opti-red ring-1 ring-opti-red' : 'border-gray-300 focus:ring-2 focus:ring-opti-red'}`}
             />
+            {dimensionsError && (
+              <p className="text-[10px] text-opti-red font-bold mt-1 uppercase animate-fade-in">
+                {dimensionsError}
+              </p>
+            )}
           </div>
 
           <div>
@@ -239,8 +288,8 @@ export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuc
               className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none bg-white"
             >
               <option value="">Aucune</option>
-              {SPECIALTIES.map(spec => (
-                <option key={spec} value={spec}>{spec}</option>
+              {specialties.map(spec => (
+                <option key={spec.id} value={spec.name}>{spec.name}</option>
               ))}
             </select>
           </div>

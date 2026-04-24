@@ -2,15 +2,16 @@
 
 import { MaintenanceLog } from "@/services/fleet";
 import { UserRole } from "@/app/context/AuthContext";
-import { Wrench, AlertTriangle, CheckCircle2, AlertCircle, MessageSquare, Clock, Edit2 } from "lucide-react";
+import { Wrench, AlertTriangle, CheckCircle2, AlertCircle, MessageSquare, Clock, Edit2, Trash2 } from "lucide-react";
 
 interface MaintenanceTimelineProps {
   logs: MaintenanceLog[];
   onEdit: (log: MaintenanceLog) => void;
+  onDelete: (logId: string) => void;
   userRole: UserRole;
 }
 
-export default function MaintenanceTimeline({ logs, onEdit, userRole }: MaintenanceTimelineProps) {
+export default function MaintenanceTimeline({ logs, onEdit, onDelete, userRole }: MaintenanceTimelineProps) {
   if (logs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
@@ -57,13 +58,22 @@ export default function MaintenanceTimeline({ logs, onEdit, userRole }: Maintena
                   {log.type}
                 </span>
                 {userRole !== 'membre' && (
-                  <button 
-                    onClick={() => onEdit(log)}
-                    className="text-gray-400 hover:text-opti-red transition-colors"
-                    title="Modifier cet événement"
-                  >
-                    <Edit2 className="w-3 h-3" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => onEdit(log)}
+                      className="text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Modifier cet événement"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                    <button 
+                      onClick={() => log.id && onDelete(log.id)}
+                      className="text-gray-400 hover:text-opti-red transition-colors"
+                      title="Supprimer cet événement"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 )}
               </div>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
