@@ -1,0 +1,198 @@
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  Timestamp,
+  onSnapshot,
+} from "firebase/firestore";
+
+export interface VehicleType {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface Vehicle {
+  id: string;
+  name: string;
+  plate: string;
+  dimensions: string;
+  motorization: string;
+  typeId: string;
+  specialty: string;
+  capacity_palettes: number;
+  inspection_date: Date;
+  is_active: boolean;
+  unavailability_reason?: string;
+}
+
+export const getVehicleTypes = async (): Promise<VehicleType[]> => {
+  try {
+    const q = query(collection(db, "vehicle_types"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as VehicleType));
+  } catch (error) {
+    console.error("Error fetching vehicle types:", error);
+    return [];
+  }
+};
+
+export const subscribeToVehicles = (onData: (vehicles: Vehicle[]) => void, onError: (err: any) => void) => {
+  const q = query(collection(db, "vehicles"));
+  
+  return onSnapshot(q, 
+    (snapshot) => {
+      const vehicles = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          inspection_date: data.inspection_date instanceof Timestamp ? data.inspection_date.toDate() : data.inspection_date
+        } as Vehicle;
+      });
+      console.log(`[FleetService] Received ${vehicles.length} vehicles via snapshot`);
+      onData(vehicles);
+    },
+    (error) => {
+      console.error("[FleetService] Snapshot error:", error);
+      onError(error);
+    }
+  );
+};
+
+export const getVehicles = async (): Promise<Vehicle[]> => {
+  // Garder pour la compatibilité mais on va préférer subscribeToVehicles
+  try {
+    const q = query(collection(db, "vehicles"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        inspection_date: data.inspection_date instanceof Timestamp ? data.inspection_date.toDate() : data.inspection_date
+      } as Vehicle;
+    });
+  } catch (error: any) {
+    console.error("[FleetService] Error fetching vehicles:", error);
+    return [];
+  }
+};
+
+export const saveVehicle = async (vehicle: any): Promise<boolean> => {
+  try {
+    const { id, ...data } = vehicle;
+    const vehicleData: any = { ...data };
+    
+    if (vehicleData.inspection_date instanceof Date) {
+      vehicleData.inspection_date = Timestamp.fromDate(vehicleData.inspection_date);
+    }
+
+    if (id) {
+      await updateDoc(doc(db, "vehicles", id), vehicleData);
+    } else {
+      const newDocRef = doc(collection(db, "vehicles"));
+      await setDoc(newDocRef, vehicleData);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error saving vehicle:", error);
+    return false;
+  }
+};
+
+export const checkFutureTours = async (vehicleId: string): Promise<boolean> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+    const q = query(
+      collection(db, "tours"),
+      where("vehicleId", "==", vehicleId),
+      where("date", ">=", today)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error("Error checking future tours (probably missing index or collection):", error);
+    return false; // On laisse passer en cas d'erreur de base de données (ex: index manquant)
+  }
+};
+
+export const deleteVehicle = async (vehicleId: string): Promise<boolean> => {
+  try {
+    const docRef = doc(db, "vehicles", vehicleId);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting vehicle:", error);
+    return false;
+  }
+};
+
+export interface MaintenanceLog {
+  id?: string;
+  vehicleId: string;
+  date: Date;
+  type: 'Maintenance' | 'Panne' | 'Avarie' | 'Réactivation' | 'Autre';
+  description: string;
+  author?: string;
+}
+
+export const getMaintenanceLogs = async (vehicleId: string): Promise<MaintenanceLog[]> => {
+  try {
+    const q = query(
+      collection(db, "maintenance_logs"),
+      where("vehicleId", "==", vehicleId)
+    );
+    const snapshot = await getDocs(q);
+    const logs = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+      } as MaintenanceLog;
+    });
+    // Tri manuel par date décroissante (plus récent en haut)
+    return logs.sort((a, b) => b.date.getTime() - a.date.getTime());
+  } catch (error) {
+    console.error("Error fetching maintenance logs:", error);
+    return [];
+  }
+};
+
+export const addMaintenanceLog = async (log: Omit<MaintenanceLog, 'id'>): Promise<boolean> => {
+  try {
+    const logData: any = { ...log };
+    if (logData.date instanceof Date) {
+      logData.date = Timestamp.fromDate(logData.date);
+    }
+    const newDocRef = doc(collection(db, "maintenance_logs"));
+    await setDoc(newDocRef, logData);
+    return true;
+  } catch (error) {
+    console.error("Error adding maintenance log:", error);
+    return false;
+  }
+};
+
+export const updateMaintenanceLog = async (logId: string, data: Partial<MaintenanceLog>): Promise<boolean> => {
+  try {
+    const logData: any = { ...data };
+    if (logData.date instanceof Date) {
+      logData.date = Timestamp.fromDate(logData.date);
+    }
+    const docRef = doc(db, "maintenance_logs", logId);
+    await updateDoc(docRef, logData);
+    return true;
+  } catch (error) {
+    console.error("Error updating maintenance log:", error);
+    return false;
+  }
+};

@@ -1,0 +1,278 @@
+import { useState } from "react";
+import { Vehicle, VehicleType, saveVehicle, checkFutureTours } from "@/services/fleet";
+import { AlertTriangle, X } from "lucide-react";
+
+interface VehicleFormProps {
+  initialData: Vehicle | null;
+  vehicleTypes: VehicleType[];
+  onCancel: () => void;
+  onSuccess: () => void;
+}
+
+const SPECIALTIES = [
+  "ADR",
+  "HAYON",
+  "GRUE",
+  "CONVOI",
+  "FRIGO",
+  "SAVOYARDE",
+  "SÉCURISÉ",
+  "DOUBLE ÉTAGE"
+];
+
+export default function VehicleForm({ initialData, vehicleTypes, onCancel, onSuccess }: VehicleFormProps) {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Valeurs du formulaire
+  const [name, setName] = useState(initialData?.name || "");
+  const [plate, setPlate] = useState(initialData?.plate || "");
+  const [dimensions, setDimensions] = useState(initialData?.dimensions || "");
+  const [motorization, setMotorization] = useState(initialData?.motorization || "");
+  const [typeId, setTypeId] = useState(initialData?.typeId || "");
+  const [specialty, setSpecialty] = useState(initialData?.specialty || "");
+  const [capacity, setCapacity] = useState(initialData?.capacity_palettes?.toString() || "");
+  
+  // Formatage de la date pour le champ input type="date"
+  const getInitialDateStr = () => {
+    if (!initialData?.inspection_date) return "";
+    const d = new Date(initialData.inspection_date);
+    return d.toISOString().split("T")[0];
+  };
+  const [inspectionDate, setInspectionDate] = useState(getInitialDateStr());
+
+  // Formatage de la plaque (SIV Français : AB-123-CD)
+  const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    let formatted = '';
+    if (value.length > 0) formatted += value.substring(0, 2);
+    if (value.length > 2) formatted += '-' + value.substring(2, 5);
+    if (value.length > 5) formatted += '-' + value.substring(5, 7);
+    setPlate(formatted);
+  };
+
+  // Formatage des dimensions à la perte du focus (onBlur)
+  const handleDimensionsBlur = () => {
+    if (!dimensions) return;
+    // On cherche deux nombres décimaux dans la chaîne saisie (ex: "13.6x4" ou "13.6 / 4")
+    const numbers = dimensions.replace(',', '.').match(/\d+(\.\d+)?/g);
+    if (numbers && numbers.length >= 2) {
+      const length = parseFloat(numbers[0]);
+      const height = parseFloat(numbers[1]);
+      // On s'assure qu'il y a au moins une décimale pour le style propre
+      setDimensions(`${length}m / ${height}m`);
+    } else if (numbers && numbers.length === 1) {
+      // Si un seul nombre, on l'applique à la longueur
+      setDimensions(`${parseFloat(numbers[0])}m`);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    // Validation
+    const missingFields = [];
+    if (!name) missingFields.push("Nom / Identifiant");
+    if (!plate) missingFields.push("Plaque d'immatriculation");
+    if (!dimensions) missingFields.push("Dimensions");
+    if (!motorization) missingFields.push("Motorisation");
+    if (!typeId) missingFields.push("Typologie (Remorque)");
+    if (!capacity) missingFields.push("Capacité");
+    if (!inspectionDate) missingFields.push("Prochain Contrôle Technique");
+
+    if (missingFields.length > 0) {
+      setError(`Veuillez remplir les champs obligatoires : ${missingFields.join(', ')}`);
+      return;
+    }
+
+    const capacityInt = parseInt(capacity, 10);
+    if (isNaN(capacityInt) || capacityInt <= 0 || capacityInt.toString() !== capacity) {
+      setError("La capacité doit être un nombre entier positif de palettes.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (initialData) {
+        const capacityChanged = initialData.capacity_palettes !== capacityInt;
+        const typeChanged = initialData.typeId !== typeId;
+
+        if (capacityChanged || typeChanged) {
+          const hasFutureTours = await checkFutureTours(initialData.id);
+          if (hasFutureTours) {
+            setError("Impossible de modifier la capacité ou le type : ce véhicule est affecté à une tournée validée dans le futur.");
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      const vehicleData: Partial<Vehicle> = {
+        ...(initialData ? { id: initialData.id } : {}),
+        name,
+        plate,
+        dimensions,
+        motorization,
+        typeId,
+        specialty,
+        capacity_palettes: capacityInt,
+        inspection_date: new Date(inspectionDate),
+        is_active: initialData ? initialData.is_active : true,
+      };
+
+      const success = await saveVehicle(vehicleData);
+      if (success) {
+        onSuccess();
+      } else {
+        setError("Erreur lors de l'enregistrement. Veuillez réessayer.");
+      }
+    } catch (err) {
+      setError("Une erreur inattendue est survenue.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-3xl mx-auto animate-fade-in">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-xl font-bold text-opti-blue">
+          {initialData ? "Modifier le véhicule" : "Ajouter un véhicule"}
+        </h2>
+        <button onClick={onCancel} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 text-opti-red p-4 rounded-xl flex items-start gap-3 border border-red-100">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Nom ou Identifiant *</label>
+            <input 
+              type="text" 
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="ex: Volvo FH16 ou V-001"
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Plaque d'immatriculation *</label>
+            <input 
+              type="text" 
+              value={plate}
+              onChange={handlePlateChange}
+              placeholder="ex: AB-123-CD"
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Capacité en Palettes *</label>
+            <input 
+              type="number" 
+              value={capacity}
+              onChange={e => setCapacity(e.target.value)}
+              placeholder="ex: 33"
+              min="1"
+              step="1"
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Dimensions (L x H) *</label>
+            <input 
+              type="text" 
+              value={dimensions}
+              onChange={e => setDimensions(e.target.value)}
+              onBlur={handleDimensionsBlur}
+              placeholder="ex: 13.6m / 4.0m"
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Motorisation *</label>
+            <input 
+              type="text" 
+              value={motorization}
+              onChange={e => setMotorization(e.target.value)}
+              placeholder="ex: Diesel Euro 6"
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Typologie (Remorque) *</label>
+            {vehicleTypes.length > 0 ? (
+              <select 
+                value={typeId}
+                onChange={e => setTypeId(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none bg-white"
+              >
+                <option value="" disabled>Sélectionner un type...</option>
+                {vehicleTypes.map(type => (
+                  <option key={type.id} value={type.id}>{type.name} - {type.description}</option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-sm text-red-500 mt-2">Aucun type de véhicule n'a été créé dans la base de données. Créez-en d'abord un depuis Firebase.</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Spécialité</label>
+            <select 
+              value={specialty}
+              onChange={e => setSpecialty(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none bg-white"
+            >
+              <option value="">Aucune</option>
+              {SPECIALTIES.map(spec => (
+                <option key={spec} value={spec}>{spec}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Prochain Contrôle Technique *</label>
+            <input 
+              type="date" 
+              value={inspectionDate}
+              onChange={e => setInspectionDate(e.target.value)}
+              className="w-full md:w-1/2 border border-gray-300 rounded-lg p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red focus:border-opti-red outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="pt-6 flex justify-end gap-4 border-t border-gray-100">
+          <button 
+            type="button" 
+            onClick={onCancel}
+            className="px-6 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="px-6 py-3 bg-opti-red text-white font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            {loading ? "Enregistrement..." : (initialData ? "Enregistrer les modifications" : "Créer le véhicule")}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
