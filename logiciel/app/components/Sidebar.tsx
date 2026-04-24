@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Home, Truck, Map as MapIcon, Users, Menu, LogOut } from "lucide-react";
 import { User } from "firebase/auth";
 
@@ -11,11 +13,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
+  const pathname = usePathname();
+
   const menuItems = [
-    { name: "Accueil", icon: Home, active: true },
-    { name: "Conducteurs & Flotte", icon: Truck, active: false },
-    { name: "Tournées & Abonnements", icon: MapIcon, active: false },
-    { name: "Gestion des clients", icon: Users, active: false },
+    { name: "Accueil", icon: Home, href: "/" },
+    { name: "Conducteurs & Flotte", icon: Truck, href: null },
+    { name: "Tournées & Abonnements", icon: MapIcon, href: "/tournees" },
+    { name: "Gestion des clients", icon: Users, href: null },
   ];
 
   return (
@@ -35,28 +39,44 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-4">
-        {menuItems.map((item) => (
-          <button
-            key={item.name}
-            className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-              item.active
-                ? "bg-red-50 text-opti-red font-bold"
-                : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
-            }`}
-            title={isCollapsed ? item.name : ""}
-          >
-            <item.icon
-              className={`w-5 h-5 shrink-0 ${
-                item.active ? "text-opti-red" : "text-opti-blue"
-              }`}
-            />
+      <nav className="flex-1 space-y-4" aria-label="Navigation principale">
+        {menuItems.map((item) => {
+          const isActive = item.href ? pathname === item.href || pathname.startsWith(item.href + '/') : false;
+          const className = `w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+            isActive
+              ? "bg-red-50 text-opti-red font-bold"
+              : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
+          }`;
 
-            {!isCollapsed && (
-              <span className="text-sm truncate">{item.name}</span>
-            )}
-          </button>
-        ))}
+          if (item.href) {
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                aria-label={item.name}
+                aria-current={isActive ? "page" : undefined}
+                className={className}
+                title={isCollapsed ? item.name : ""}
+              >
+                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-opti-red" : "text-opti-blue"}`} />
+                {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+              </Link>
+            );
+          }
+
+          return (
+            <button
+              key={item.name}
+              className={className}
+              title={isCollapsed ? item.name : ""}
+              aria-label={item.name}
+              disabled
+            >
+              <item.icon className="w-5 h-5 shrink-0 text-opti-blue opacity-40" />
+              {!isCollapsed && <span className="text-sm truncate opacity-40">{item.name}</span>}
+            </button>
+          );
+        })}
       </nav>
 
       {/* User Profile (Bottom) */}
