@@ -10,8 +10,6 @@ interface SidebarProps {
   onLogout: () => void;
   isCollapsed: boolean;
   toggleSidebar: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
 export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
