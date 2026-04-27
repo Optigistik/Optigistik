@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Fonction utile pour récupérer facilement le rôle depuis le Custom Claim (JWT)
+    function getUserRole() {
+      // Si le token n'a pas de rôle (nouvel utilisateur), on retourne null
+      return request.auth != null ? request.auth.token.role : null;
+    }
+    
+    // Vérifie si l'utilisateur est connecté
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ---------------------------------------------------------
+    // UTILISATEURS (users)
+    // ---------------------------------------------------------
+    match /users/{userId} {
+      // Un utilisateur peut lire son propre profil, l'Admin peut tout lire
+      allow read: if isAuthenticated() && (request.auth.uid == userId || getUserRole() == 'Admin');
+      
+      // Seul un Admin peut créer, modifier ou supprimer des utilisateurs
+      allow write: if isAuthenticated() && getUserRole() == 'Admin';
+    }
+
+    // ---------------------------------------------------------
+    // TOURNEES (tournees)
+    // ---------------------------------------------------------
+    match /tournees/{tourneeId} {
+      // Lecture :
+      // - Admin, Gestionnaire, Lecteur voient toutes les tournées
+      // - Chauffeur ne voit que les siennes (le champ 'driverId' doit correspondre à son UID)
+      allow read: if isAuthenticated() && (
+        getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'] || 
+        (getUserRole() == 'Chauffeur' && resource.data.driverId == request.auth.uid)
+      );
+      
+      // Écriture (Création/Modification/Suppression) :
+      // - Seuls l'Admin et le Gestionnaire peuvent modifier les tournées
+      allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
+    }
+
+    // ---------------------------------------------------------
+    // FLOTTE / CAMIONS (camions)
+    // ---------------------------------------------------------
+    match /camions/{camionId} {
+      // Lecture : Le Chauffeur n'a pas accès à la flotte, les autres oui
+      allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
+      
+      // Écriture : Admin et Gestionnaire gèrent la flotte
+      allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
+    }
+
+    // ---------------------------------------------------------
+    // TYPOLOGIES / CONFIGURATION (typologies)
+    // ---------------------------------------------------------
+    match /typologies/{docId} {
+      // Lecture : Admin, Gestionnaire et Lecteur peuvent consulter (Chauffeur exclu)
+      allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
+      
+      // Écriture : Accès configuration critique => UNIQUEMENT l'Admin
+      allow write: if isAuthenticated() && getUserRole() == 'Admin';
+    }
+
+  }
+}
