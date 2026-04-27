@@ -5,7 +5,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import RoleGuard from "@/app/components/RoleGuard";
 import Link from "next/link";
-import { ArrowLeft, Plus, X, UserPlus, ShieldCheck, Users, Truck } from "lucide-react";
+import { ArrowLeft, Plus, X, UserPlus, ShieldCheck, Users, Truck, Trash2, Pencil } from "lucide-react";
 
 type UserData = {
   uid: string;
@@ -30,6 +30,20 @@ export default function RolesAdminPage() {
   const [newRole, setNewRole] = useState("Lecteur");
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // État pour la suppression
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // États pour la modification
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<UserData | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Charger la liste des utilisateurs depuis Firestore
   const fetchUsers = async () => {
@@ -132,6 +146,95 @@ export default function RolesAdminPage() {
       setCreateError(error.message);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  // Fonction pour supprimer un utilisateur
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Session expirée");
+
+      const response = await fetch("/api/users/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ targetUid: userToDelete.uid }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la suppression");
+      }
+
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+      await fetchUsers();
+      alert("Utilisateur supprimé avec succès !");
+
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Fonction pour ouvrir la modale d'édition
+  const openEditModal = (user: UserData) => {
+    setUserToEdit(user);
+    setEditName(user.name || "");
+    setEditEmail(user.email || "");
+    setEditRole(user.role || "Lecteur");
+    setEditError(null);
+    setShowEditModal(true);
+  };
+
+  // Fonction pour mettre à jour un utilisateur via l'API
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userToEdit) return;
+    
+    setEditError(null);
+    setIsUpdating(true);
+
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Session expirée");
+
+      const response = await fetch("/api/users/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetUid: userToEdit.uid,
+          name: editName,
+          email: editEmail,
+          role: editRole
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la mise à jour");
+      }
+
+      setShowEditModal(false);
+      await fetchUsers();
+      alert("Utilisateur mis à jour avec succès !");
+
+    } catch (error: any) {
+      setEditError(error.message);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -296,18 +399,29 @@ export default function RolesAdminPage() {
                         </span>
                       </td>
                       <td className="p-6 text-right">
-                        <select 
-                          className="text-sm border border-slate-200 rounded-xl p-3 bg-white font-bold text-opti-blue outline-none focus:ring-2 focus:ring-opti-red disabled:opacity-30 transition-all cursor-pointer shadow-sm hover:border-slate-300"
-                          value={user.role || ""}
-                          onChange={(e) => handleRoleChange(user.uid, e.target.value)}
-                          disabled={updatingId === user.uid || (user.role === 'Admin' && auth.currentUser?.uid !== user.uid)}
-                          title={user.role === 'Admin' && auth.currentUser?.uid !== user.uid ? "Modification interdite" : ""}
-                        >
-                          <option value="" disabled>Modifier le rôle</option>
-                          {ROLES.map(role => (
-                            <option key={role} value={role}>{role}</option>
-                          ))}
-                        </select>
+                        <div className="flex items-center justify-end gap-3">
+                          <button 
+                            onClick={() => openEditModal(user)}
+                            className={`p-3 text-slate-400 hover:text-opti-blue hover:bg-blue-50 rounded-xl transition-all
+                              ${(user.role === 'Admin' && auth.currentUser?.uid !== user.uid) ? 'opacity-0 pointer-events-none' : ''}`}
+                            title={user.uid === auth.currentUser?.uid ? "Modifier mon compte" : "Modifier l'utilisateur"}
+                          >
+                            <Pencil className="w-5 h-5" />
+                          </button>
+
+                          {(user.uid === auth.currentUser?.uid || user.role !== 'Admin') && (
+                            <button 
+                              onClick={() => {
+                                setUserToDelete(user);
+                                setShowDeleteModal(true);
+                              }}
+                              className="p-3 text-slate-400 hover:text-opti-red hover:bg-red-50 rounded-xl transition-all"
+                              title={user.uid === auth.currentUser?.uid ? "Supprimer mon compte" : "Supprimer l'utilisateur"}
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -422,6 +536,123 @@ export default function RolesAdminPage() {
                   className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
                 >
                   {isCreating ? "Création..." : "Confirmer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmation de Suppression */}
+      {showDeleteModal && userToDelete && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 text-center">
+            <div className="bg-red-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 className="w-10 h-10 text-opti-red" />
+            </div>
+            
+            <h2 className="text-2xl font-bold text-opti-blue mb-3">Supprimer l'accès ?</h2>
+            <p className="text-slate-500 mb-8 leading-relaxed">
+              Êtes-vous sûr de vouloir supprimer le compte de <span className="font-bold text-opti-blue">{userToDelete.name || userToDelete.email}</span> ? Cette action est irréversible.
+            </p>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setUserToDelete(null);
+                }}
+                className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={handleDeleteUser}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
+              >
+                {isDeleting ? "Suppression..." : "Confirmer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Modification d'Utilisateur */}
+      {showEditModal && userToEdit && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="bg-blue-50 p-3 rounded-2xl">
+                <Pencil className="w-6 h-6 text-opti-blue" />
+              </div>
+              <button 
+                onClick={() => setShowEditModal(false)} 
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+
+            <h2 className="text-2xl font-bold text-opti-blue mb-2">Modifier le profil</h2>
+            <p className="text-slate-500 text-sm mb-8">Mise à jour des informations de <span className="font-bold text-opti-blue">{userToEdit.name || userToEdit.email}</span>.</p>
+
+            <form onSubmit={handleUpdateUser} className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Nom Complet</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Email Professionnel</label>
+                <input 
+                  type="email" 
+                  required
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Attribuer un Rôle</label>
+                <select 
+                  value={editRole}
+                  onChange={e => setEditRole(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer"
+                >
+                  {ROLES.map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+
+              {editError && (
+                <div className="p-4 bg-red-50 rounded-xl border border-red-100 text-opti-red text-xs font-medium">
+                  {editError}
+                </div>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isUpdating}
+                  className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
+                >
+                  {isUpdating ? "Mise à jour..." : "Sauvegarder"}
                 </button>
               </div>
             </form>
