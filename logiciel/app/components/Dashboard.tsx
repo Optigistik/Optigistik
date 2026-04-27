@@ -24,8 +24,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         onLogout={onLogout}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
       />
 
       <main className="flex-1 p-8 bg-white h-screen overflow-y-auto">

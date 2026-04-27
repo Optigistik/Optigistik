@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Home, Truck, Map as MapIcon, Users, Menu, LogOut } from "lucide-react";
 import { User } from "firebase/auth";
 
@@ -8,16 +10,16 @@ interface SidebarProps {
   onLogout: () => void;
   isCollapsed: boolean;
   toggleSidebar: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
-export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar, activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
+  const pathname = usePathname();
+
   const menuItems = [
-    { id: "home", name: "Accueil", icon: Home },
-    { id: "fleet", name: "Conducteurs & Flotte", icon: Truck },
-    { id: "tours", name: "Tournées & Abonnements", icon: MapIcon },
-    { id: "clients", name: "Gestion des clients", icon: Users },
+    { name: "Accueil", icon: Home, href: "/" },
+    { name: "Conducteurs & Flotte", icon: Truck, href: null },
+    { name: "Tournées & Abonnements", icon: MapIcon, href: "/tournees" },
+    { name: "Gestion des clients", icon: Users, href: null },
   ];
 
   return (
@@ -37,29 +39,41 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar, ac
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-4">
+      <nav className="flex-1 space-y-4" aria-label="Navigation principale">
         {menuItems.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive = item.href ? pathname === item.href || pathname.startsWith(item.href + '/') : false;
+          const className = `w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+            isActive
+              ? "bg-red-50 text-opti-red font-bold"
+              : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
+          }`;
+
+          if (item.href) {
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                aria-label={item.name}
+                aria-current={isActive ? "page" : undefined}
+                className={className}
+                title={isCollapsed ? item.name : ""}
+              >
+                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-opti-red" : "text-opti-blue"}`} />
+                {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+              </Link>
+            );
+          }
+
           return (
             <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-                isActive
-                  ? "bg-red-50 text-opti-red font-bold"
-                  : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
-              }`}
+              key={item.name}
+              className={className}
               title={isCollapsed ? item.name : ""}
+              aria-label={item.name}
+              disabled
             >
-              <item.icon
-                className={`w-5 h-5 shrink-0 ${
-                  isActive ? "text-opti-red" : "text-opti-blue"
-                }`}
-              />
-
-              {!isCollapsed && (
-                <span className="text-sm truncate">{item.name}</span>
-              )}
+              <item.icon className="w-5 h-5 shrink-0 text-opti-blue opacity-40" />
+              {!isCollapsed && <span className="text-sm truncate opacity-40">{item.name}</span>}
             </button>
           );
         })}
