@@ -1,12 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const router = useRouter();
+
+  // Redirection automatique si l'utilisateur n'est pas connecté
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
+
+  // Ne rien afficher le temps de vérifier la connexion ou de rediriger
+  if (loading || !user) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50">
