@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -17,21 +19,39 @@ export async function POST(request: Request) {
 
     const token = authHeader.split('Bearer ')[1];
     
+    // Récupérer les services admin
+    const auth = getAdminAuth();
+    const db = getAdminDb();
+
+    if (!auth || !db) {
+      console.error("Firebase Admin non initialisé. Vérifiez les variables d'environnement.");
+      return NextResponse.json({ error: 'Erreur de configuration serveur (Firebase Admin)' }, { status: 500 });
+    }
+
     // Vérifier qui est l'utilisateur effectuant la requête
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     
     // IMPORTANT: Seul un Admin peut changer les rôles.
-    // Si c'est la toute première fois et que tu n'as pas encore d'Admin, 
-    // tu peux commenter temporairement ces 3 lignes pour t'attribuer le rôle Admin
     if (decodedToken.role !== 'Admin') {
       return NextResponse.json({ error: 'Accès refusé. Réservé aux administrateurs.' }, { status: 403 });
     }
 
-    // 1. Mettre à jour le Custom Claim dans le JWT du Firebase Auth
-    await adminAuth.setCustomUserClaims(targetUid, { role: newRole });
+    // 1. Vérifier le rôle actuel de l'utilisateur cible
+    const targetUser = await auth.getUser(targetUid);
+    const currentTargetRole = targetUser.customClaims?.role;
 
-    // 2. Mettre à jour la collection Firestore (pour l'affichage UI)
-    await adminDb.collection('users').doc(targetUid).update({ role: newRole });
+    // Si la cible est Admin et que ce n'est pas l'utilisateur lui-même qui se modifie
+    if (currentTargetRole === 'Admin' && decodedToken.uid !== targetUid) {
+      return NextResponse.json({ 
+        error: 'Sécurité : Vous ne pouvez pas modifier le rôle d\'un autre administrateur.' 
+      }, { status: 403 });
+    }
+
+    // 2. Mettre à jour le Custom Claim dans le JWT du Firebase Auth
+    await auth.setCustomUserClaims(targetUid, { role: newRole });
+
+    // 3. Mettre à jour la collection Firestore (pour l'affichage UI)
+    await db.collection('users').doc(targetUid).update({ role: newRole });
 
     return NextResponse.json({ success: true, message: `Rôle ${newRole} attribué avec succès.` });
   } catch (error: any) {

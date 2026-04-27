@@ -1,7 +1,10 @@
 "use client";
 
-import { Home, Truck, Map as MapIcon, Users, Menu, LogOut } from "lucide-react";
+import { Home, Truck, Map as MapIcon, Users, Menu, LogOut, ShieldCheck } from "lucide-react";
 import { User } from "firebase/auth";
+import Link from "next/link";
+import RoleGuard from "./RoleGuard";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   user: User | null;
@@ -11,11 +14,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
+  const pathname = usePathname();
+
   const menuItems = [
-    { name: "Accueil", icon: Home, active: true },
-    { name: "Conducteurs & Flotte", icon: Truck, active: false },
-    { name: "Tournées & Abonnements", icon: MapIcon, active: false },
-    { name: "Gestion des clients", icon: Users, active: false },
+    { name: "Accueil", icon: Home, href: "/" },
+    { name: "Conducteurs & Flotte", icon: Truck, href: "/fleet" },
+    { name: "Tournées & Abonnements", icon: MapIcon, href: "/tours" },
+    { name: "Gestion des clients", icon: Users, href: "/clients" },
   ];
 
   return (
@@ -36,27 +41,53 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
 
       {/* Navigation */}
       <nav className="flex-1 space-y-4">
-        {menuItems.map((item) => (
-          <button
-            key={item.name}
+        {menuItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+                isActive
+                  ? "bg-red-50 text-opti-red font-bold"
+                  : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
+              }`}
+              title={isCollapsed ? item.name : ""}
+            >
+              <item.icon
+                className={`w-5 h-5 shrink-0 ${
+                  isActive ? "text-opti-red" : "text-opti-blue"
+                }`}
+              />
+
+              {!isCollapsed && (
+                <span className="text-sm truncate">{item.name}</span>
+              )}
+            </Link>
+          );
+        })}
+
+        <RoleGuard allowedRoles={["Admin"]}>
+          <Link
+            href="/admin/roles"
             className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-              item.active
+              pathname === "/admin/roles"
                 ? "bg-red-50 text-opti-red font-bold"
                 : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
             }`}
-            title={isCollapsed ? item.name : ""}
+            title={isCollapsed ? "Gestion du personnel" : ""}
           >
-            <item.icon
+            <ShieldCheck
               className={`w-5 h-5 shrink-0 ${
-                item.active ? "text-opti-red" : "text-opti-blue"
+                pathname === "/admin/roles" ? "text-opti-red" : "text-opti-blue"
               }`}
             />
 
             {!isCollapsed && (
-              <span className="text-sm truncate">{item.name}</span>
+              <span className="text-sm truncate">Gestion du personnel</span>
             )}
-          </button>
-        ))}
+          </Link>
+        </RoleGuard>
       </nav>
 
       {/* User Profile (Bottom) */}
