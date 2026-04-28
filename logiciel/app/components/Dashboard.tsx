@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import MessagesList from "./MessagesList";
 import AlertsList from "./AlertsList";
 import MapSection from "./MapSection";
-import FleetSection from "./FleetSection";
+import FleetSection from "../fleet/page";
 
 interface DashboardProps {
   user: User | null;

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import FleetList from "./FleetList";
-import FleetDetail from "./FleetDetail";
-import VehicleForm from "./VehicleForm";
-import FleetAdmin from "./FleetAdmin";
+import FleetList from "../components/FleetList";
+import FleetDetail from "../components/FleetDetail";
+import VehicleForm from "../components/VehicleForm";
+import FleetAdmin from "../components/FleetAdmin";
 import { getVehicleTypes, Vehicle, VehicleType, Specialty, getSpecialties, subscribeToVehicles, Motorization, getMotorizations } from "@/services/fleet";
 import { useAuth } from "@/app/context/AuthContext";
 import { ShieldAlert, Clock, Settings } from "lucide-react";

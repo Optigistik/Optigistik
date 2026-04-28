@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Truck, Map as MapIcon, Users, Menu, LogOut } from "lucide-react";
+import { Home, Truck, Map as MapIcon, Users, Menu, LogOut, ShieldCheck } from "lucide-react";
 import { User } from "firebase/auth";
+import Link from "next/link";
+import RoleGuard from "./RoleGuard";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   user: User | null;
@@ -17,9 +18,9 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
 
   const menuItems = [
     { name: "Accueil", icon: Home, href: "/" },
-    { name: "Conducteurs & Flotte", icon: Truck, href: null },
+    { name: "Conducteurs & Flotte", icon: Truck, href: "/fleet" },
     { name: "Tournées & Abonnements", icon: MapIcon, href: "/tournees" },
-    { name: "Gestion des clients", icon: Users, href: null },
+    { name: "Gestion des clients", icon: Users, href: "/clients" },
   ];
 
   return (
@@ -39,44 +40,54 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-4" aria-label="Navigation principale">
+      <nav className="flex-1 space-y-4">
         {menuItems.map((item) => {
-          const isActive = item.href ? pathname === item.href || pathname.startsWith(item.href + '/') : false;
-          const className = `w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-            isActive
-              ? "bg-red-50 text-opti-red font-bold"
-              : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
-          }`;
-
-          if (item.href) {
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                aria-label={item.name}
-                aria-current={isActive ? "page" : undefined}
-                className={className}
-                title={isCollapsed ? item.name : ""}
-              >
-                <item.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-opti-red" : "text-opti-blue"}`} />
-                {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
-              </Link>
-            );
-          }
-
+          const isActive = pathname === item.href;
           return (
-            <button
+            <Link
               key={item.name}
-              className={className}
+              href={item.href}
+              className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+                isActive
+                  ? "bg-red-50 text-opti-red font-bold"
+                  : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
+              }`}
               title={isCollapsed ? item.name : ""}
-              aria-label={item.name}
-              disabled
             >
-              <item.icon className="w-5 h-5 shrink-0 text-opti-blue opacity-40" />
-              {!isCollapsed && <span className="text-sm truncate opacity-40">{item.name}</span>}
-            </button>
+              <item.icon
+                className={`w-5 h-5 shrink-0 ${
+                  isActive ? "text-opti-red" : "text-opti-blue"
+                }`}
+              />
+
+              {!isCollapsed && (
+                <span className="text-sm truncate">{item.name}</span>
+              )}
+            </Link>
           );
         })}
+
+        <RoleGuard allowedRoles={["Admin"]}>
+          <Link
+            href="/admin/roles"
+            className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+              pathname === "/admin/roles"
+                ? "bg-red-50 text-opti-red font-bold"
+                : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
+            }`}
+            title={isCollapsed ? "Gestion du personnel" : ""}
+          >
+            <ShieldCheck
+              className={`w-5 h-5 shrink-0 ${
+                pathname === "/admin/roles" ? "text-opti-red" : "text-opti-blue"
+              }`}
+            />
+
+            {!isCollapsed && (
+              <span className="text-sm truncate">Gestion du personnel</span>
+            )}
+          </Link>
+        </RoleGuard>
       </nav>
 
       {/* User Profile (Bottom) */}
