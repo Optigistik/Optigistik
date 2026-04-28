@@ -1,13 +1,11 @@
 "use client";
 
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
 import AuthForm from "./components/AuthForm";
 import Dashboard from "./components/Dashboard";
 import { useAuth } from "@/app/context/AuthContext";
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading, logout } = useAuth();
 
   if (loading) {
     return (
@@ -18,7 +16,13 @@ export default function Home() {
   }
 
   if (user) {
-    return <Dashboard user={user} onLogout={() => signOut(auth)} />;
+    return (
+      <Dashboard 
+        user={user} 
+        profile={profile} 
+        onLogout={logout} 
+      />
+    );
   }
 
   return <AuthForm />;

@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; // Ajout de useState
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../context/AuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, profile, logout } = useAuth(); // Ajout du profile
+  const { user, loading, profile, logout } = useAuth();
   const router = useRouter();
+
+  // 1. AJOUT de l'état pour la Sidebar
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -15,7 +18,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, loading, router]);
 
-  // On n'affiche rien tant que Firebase n'a pas répondu (pour éviter le flash du login)
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -30,9 +32,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar 
         user={user} 
-        profile={profile} // On passe le profile pour gérer les rôles dans la sidebar
+        profile={profile}
         onLogout={logout} 
-        /* ... reste des props */
+        // 2. PASSAGE des propriétés manquantes
+        isCollapsed={isCollapsed}
+        toggleSidebar={() => setIsCollapsed(!isCollapsed)}
       />
       <main className="flex-1 p-8 h-screen overflow-y-auto">
         <div className="max-w-[1600px] mx-auto w-full">

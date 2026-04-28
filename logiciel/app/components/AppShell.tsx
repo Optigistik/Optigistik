@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { auth } from '@/lib/firebase'
-import { signOut, type User } from 'firebase/auth'
+import { useAuth } from '../context/AuthContext'
 import { Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 
@@ -12,20 +11,12 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children }: AppShellProps) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, profile, loading, logout } = useAuth() 
+  
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setUser(u)
-      setLoading(false)
-      if (!u) router.replace('/')
-    })
-    return () => unsubscribe()
-  }, [router])
 
   if (loading) {
     return (
@@ -56,7 +47,8 @@ export default function AppShell({ children }: AppShellProps) {
       `}>
         <Sidebar
           user={user}
-          onLogout={() => signOut(auth)}
+          profile={profile} 
+          onLogout={logout} 
           isCollapsed={isCollapsed}
           toggleSidebar={() => {
             if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -70,7 +62,6 @@ export default function AppShell({ children }: AppShellProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 bg-gray-50">
-        {/* Mobile top bar */}
         <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-10">
           <button
             onClick={() => setIsMobileOpen(true)}

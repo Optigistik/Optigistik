@@ -7,10 +7,11 @@ import { useAuth } from "../context/AuthContext";
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  
+  const { user, profile, loading, logout } = useAuth(); 
+  
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // On cache la sidebar sur la page de login ou si l'utilisateur n'est pas connecté
   const isLoginPage = pathname === "/";
   const shouldShowSidebar = !isLoginPage && user && !loading;
 
@@ -22,12 +23,15 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
     <div className="flex min-h-screen bg-slate-100 overflow-hidden">
       <Sidebar 
         user={user} 
+        profile={profile}
         onLogout={logout} 
         isCollapsed={isCollapsed} 
         toggleSidebar={() => setIsCollapsed(!isCollapsed)} 
       />
       <main className="flex-1 p-8 h-screen overflow-y-auto">
-        {children}
+        <div className="max-w-[1600px] mx-auto w-full">
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -44,7 +44,11 @@ export default function DriverDetailPage({ params }: PageProps) {
 
   return (
     <DashboardLayout>
-      <DriverDetail driver={driver} onUpdate={setDriver} />
+      <DriverDetail 
+        driver={driver} 
+        onUpdate={setDriver} 
+        onBack={() => router.push("/conducteurs-flotte")} 
+      />
     </DashboardLayout>
   );
 }
