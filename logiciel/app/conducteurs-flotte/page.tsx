@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import DashboardLayout from "../components/DashboardLayout";
 import DriversList from "../components/DriversList";
 import DriverDetail from "../components/DriverDetail";
@@ -14,6 +16,7 @@ export default function ConducteursFlottePage() {
   const { profile, loading: authLoading } = useAuth();
   const [view, setView] = useState<ViewState>("list");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const pathname = usePathname(); // Hook pour gérer les onglets
 
   const userRole = profile?.role || 'membre';
 
@@ -30,15 +33,31 @@ export default function ConducteursFlottePage() {
   return (
     <DashboardLayout>
       <div className="w-full space-y-6">
-        {/* Navigation Tabs Locale */}
+        
+        {/* Navigation Tabs Dynamiques (Reliées à /fleet) */}
         {view === "list" && (
-          <div className="mb-6 flex gap-4 border-b border-gray-200">
-            <button className="py-2 px-4 text-opti-blue border-b-2 border-opti-blue font-bold">
+          <div className="mb-6 flex gap-8 border-b border-gray-200">
+            <Link
+              href="/conducteurs-flotte"
+              className={`py-2 px-1 transition-all duration-200 ${
+                pathname === "/conducteurs-flotte"
+                  ? "text-opti-blue border-b-2 border-opti-blue font-bold"
+                  : "text-gray-500 hover:text-opti-blue font-medium"
+              }`}
+            >
               Conducteurs
-            </button>
-            <button className="py-2 px-4 text-gray-500 font-medium">
+            </Link>
+            
+            <Link
+              href="/fleet"
+              className={`py-2 px-1 transition-all duration-200 ${
+                pathname === "/fleet"
+                  ? "text-opti-red border-b-2 border-opti-red font-bold"
+                  : "text-gray-500 hover:text-opti-red font-medium"
+              }`}
+            >
               Flotte de véhicules
-            </button>
+            </Link>
           </div>
         )}
 
@@ -48,7 +67,7 @@ export default function ConducteursFlottePage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-opti-blue"></div>
           </div>
         ) : userRole === 'membre' ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm animate-in fade-in duration-500">
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
               <ShieldAlert className="w-10 h-10 text-opti-red" />
             </div>
@@ -58,7 +77,7 @@ export default function ConducteursFlottePage() {
             </p>
           </div>
         ) : (
-          <>
+          <div className="animate-in fade-in duration-500">
             {view === "list" && (
               <DriversList onSelectDriver={handleSelectDriver} />
             )}
@@ -70,7 +89,7 @@ export default function ConducteursFlottePage() {
                 onBack={handleBackToList}
               />
             )}
-          </>
+          </div>
         )}
       </div>
     </DashboardLayout>

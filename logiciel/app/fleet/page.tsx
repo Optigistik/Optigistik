@@ -1,13 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import FleetList from "../components/FleetList";
 import FleetDetail from "../components/FleetDetail";
 import VehicleForm from "../components/VehicleForm";
 import FleetAdmin from "../components/FleetAdmin";
-import { getVehicleTypes, Vehicle, VehicleType, Specialty, getSpecialties, subscribeToVehicles, Motorization, getMotorizations } from "@/services/fleet";
+// Import de ton layout global qui contient la Sidebar corrigée
+import DashboardLayout from "../components/DashboardLayout"; 
+import { 
+  getVehicleTypes, Vehicle, VehicleType, Specialty, 
+  getSpecialties, subscribeToVehicles, Motorization, getMotorizations 
+} from "@/services/fleet";
 import { useAuth } from "@/app/context/AuthContext";
-import { ShieldAlert, Clock, Settings } from "lucide-react";
+import { ShieldAlert, Settings } from "lucide-react";
 
 type ViewState = "list" | "detail" | "form" | "admin";
 
@@ -15,6 +22,7 @@ export default function FleetSection() {
   const [view, setView] = useState<ViewState>("list");
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const { profile, loading: authLoading } = useAuth();
+  const pathname = usePathname();
   
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
@@ -44,7 +52,6 @@ export default function FleetSection() {
   useEffect(() => {
     fetchData();
 
-    // Abonnement temps réel aux camions
     const unsubscribe = subscribeToVehicles(
       (data) => {
         setVehicles(data);
@@ -60,14 +67,10 @@ export default function FleetSection() {
     return () => unsubscribe();
   }, []);
 
-  // Re-fetch quand le profil est chargé pour s'assurer d'avoir les droits de lecture
   useEffect(() => {
-    if (profile) {
-      fetchData(false);
-    }
+    if (profile) fetchData(false);
   }, [profile]);
 
-  // Synchronisation du véhicule sélectionné quand la liste se met à jour
   useEffect(() => {
     if (selectedVehicle) {
       const updated = vehicles.find(v => v.id === selectedVehicle.id);
@@ -95,7 +98,7 @@ export default function FleetSection() {
   const handleBackToList = () => {
     setSelectedVehicle(null);
     setView("list");
-    fetchData(false); // Refresh data silently on back
+    fetchData(false);
   };
 
   const handleFormSuccess = () => {
@@ -103,106 +106,124 @@ export default function FleetSection() {
     fetchData(true);
   };
 
-  if (loading || authLoading) {
-    return (
-      <div className="flex h-[500px] items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-opti-red"></div>
-      </div>
-    );
-  }
-
-  const userRole = profile?.role || 'membre'; // Par défaut 'membre' si pas de profil trouvé
+  const userRole = profile?.role || 'membre';
 
   return (
-    <div className="w-full space-y-6">
-      {/* Tab Navigation Local (Conducteurs / Flotte) - Pour l'instant on se concentre sur la flotte */}
-      {view === "list" && (
-        <div className="mb-6 flex gap-4 border-b border-gray-200">
-          <button className="py-2 px-4 text-gray-500 font-medium">Conducteurs</button>
-          <button className="py-2 px-4 text-opti-red border-b-2 border-opti-red font-bold">Flotte de véhicules</button>
-          {userRole.toLowerCase() === 'admin' && (
-            <button 
-              onClick={() => setView("admin")}
-              className="py-1.5 px-3 bg-gray-100 text-gray-600 hover:bg-opti-blue hover:text-white rounded-lg transition-all ml-auto flex items-center gap-2 text-xs font-bold shadow-sm"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              CONFIGURATION
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Rendu conditionnel selon le rôle 'membre' */}
-      {userRole === 'membre' ? (
-        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm animate-fade-in">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
-            <ShieldAlert className="w-10 h-10 text-opti-red" />
-          </div>
-          <h2 className="text-xl font-bold text-opti-blue mb-2">Accès restreint</h2>
-          <p className="text-gray-500 max-w-md text-center leading-relaxed">
-            Vous devez demander à un supérieur pour avoir accès à ces informations.
-          </p>
-        </div>
-      ) : (
-        <>
-          {view === "list" && (
-            <FleetList 
-              vehicles={vehicles} 
-              vehicleTypes={vehicleTypes}
-              onSelectVehicle={handleSelectVehicle}
-              onAddVehicle={handleAddVehicle}
-              onEditVehicle={handleEditVehicle}
-              onDeleteSuccess={() => fetchData(false)}
-              userRole={userRole}
-            />
-          )}
-
-          {view === "detail" && selectedVehicle && (
-            <FleetDetail 
-              vehicle={selectedVehicle}
-              vehicleTypes={vehicleTypes}
-              onBack={handleBackToList}
-              onEdit={() => handleEditVehicle(selectedVehicle)}
-              onRefresh={() => fetchData(false)}
-              userRole={userRole}
-            />
-          )}
-
-          {view === "form" && (
-            <VehicleForm
-              initialData={selectedVehicle}
-              vehicleTypes={vehicleTypes}
-              specialties={specialties}
-              motorizations={motorizations}
-              onCancel={handleBackToList}
-              onSuccess={handleFormSuccess}
-            />
-          )}
-
-          {view === "admin" && (
-            <div className="space-y-4">
-              <button 
-                onClick={handleBackToList}
-                className="flex items-center gap-2 text-gray-500 hover:text-opti-blue transition-colors font-bold text-sm"
+    <DashboardLayout>
+      <div className="w-full space-y-6">
+        {/* Navigation Tabs Dynamiques */}
+        {view === "list" && (
+          <div className="mb-6 flex items-center justify-between border-b border-gray-200">
+            <div className="flex gap-8">
+              <Link
+                href="/conducteurs-flotte"
+                className={`py-2 px-1 transition-all duration-200 ${
+                  pathname === "/conducteurs-flotte"
+                    ? "text-opti-blue border-b-2 border-opti-blue font-bold"
+                    : "text-gray-500 hover:text-opti-blue font-medium"
+                }`}
               >
-                ← Retour à la liste
-              </button>
-              <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-                <h3 className="text-lg font-bold text-opti-blue mb-4">Configuration de la Flotte</h3>
-                <p className="text-gray-500 mb-6">Gérez ici les types de véhicules et les spécialités disponibles.</p>
-                {/* Je vais créer le composant FleetAdmin juste après */}
-                <FleetAdmin 
-                  types={vehicleTypes} 
-                  specialties={specialties} 
-                  motorizations={motorizations}
-                  onRefresh={fetchData} 
-                />
-              </div>
+                Conducteurs
+              </Link>
+              
+              <Link
+                href="/fleet"
+                className={`py-2 px-1 transition-all duration-200 ${
+                  pathname === "/fleet"
+                    ? "text-opti-red border-b-2 border-opti-red font-bold"
+                    : "text-gray-500 hover:text-opti-red font-medium"
+                }`}
+              >
+                Flotte de véhicules
+              </Link>
             </div>
-          )}
-        </>
-      )}
 
-    </div>
+            {userRole.toLowerCase() === 'admin' && (
+              <button 
+                onClick={() => setView("admin")}
+                className="py-1.5 px-3 mb-2 bg-gray-100 text-gray-600 hover:bg-opti-blue hover:text-white rounded-lg transition-all flex items-center gap-2 text-xs font-bold shadow-sm cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                CONFIGURATION
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Gestion des états : Chargement / Accès restreint / Contenu */}
+        {(loading || authLoading) ? (
+          <div className="flex h-[400px] items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-opti-red"></div>
+          </div>
+        ) : userRole === 'membre' ? (
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm animate-in fade-in duration-500">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
+              <ShieldAlert className="w-10 h-10 text-opti-red" />
+            </div>
+            <h2 className="text-xl font-bold text-opti-blue mb-2">Accès restreint</h2>
+            <p className="text-gray-500 max-w-md text-center leading-relaxed">
+              Vous devez demander à un supérieur pour avoir accès à ces informations.
+            </p>
+          </div>
+        ) : (
+          <div className="animate-in fade-in duration-500">
+            {view === "list" && (
+              <FleetList 
+                vehicles={vehicles} 
+                vehicleTypes={vehicleTypes}
+                onSelectVehicle={handleSelectVehicle}
+                onAddVehicle={handleAddVehicle}
+                onEditVehicle={handleEditVehicle}
+                onDeleteSuccess={() => fetchData(false)}
+                userRole={userRole}
+              />
+            )}
+
+            {view === "detail" && selectedVehicle && (
+              <FleetDetail 
+                vehicle={selectedVehicle}
+                vehicleTypes={vehicleTypes}
+                onBack={handleBackToList}
+                onEdit={() => handleEditVehicle(selectedVehicle)}
+                onRefresh={() => fetchData(false)}
+                userRole={userRole}
+              />
+            )}
+
+            {view === "form" && (
+              <VehicleForm
+                initialData={selectedVehicle}
+                vehicleTypes={vehicleTypes}
+                specialties={specialties}
+                motorizations={motorizations}
+                onCancel={handleBackToList}
+                onSuccess={handleFormSuccess}
+              />
+            )}
+
+            {view === "admin" && (
+              <div className="space-y-4">
+                <button 
+                  onClick={handleBackToList}
+                  className="flex items-center gap-2 text-gray-500 hover:text-opti-blue transition-colors font-bold text-sm cursor-pointer"
+                >
+                  ← Retour à la liste
+                </button>
+                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                  <h3 className="text-lg font-bold text-opti-blue mb-4">Configuration de la Flotte</h3>
+                  <p className="text-gray-500 mb-6">Gérez ici les types de véhicules et les spécialités disponibles.</p>
+                  <FleetAdmin 
+                    types={vehicleTypes} 
+                    specialties={specialties} 
+                    motorizations={motorizations}
+                    onRefresh={fetchData} 
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

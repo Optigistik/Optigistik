@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"; // Ajout de useState
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../context/AuthContext";
@@ -9,7 +9,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, loading, profile, logout } = useAuth();
   const router = useRouter();
 
-  // 1. AJOUT de l'état pour la Sidebar
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         user={user} 
         profile={profile}
         onLogout={logout} 
-        // 2. PASSAGE des propriétés manquantes
         isCollapsed={isCollapsed}
         toggleSidebar={() => setIsCollapsed(!isCollapsed)}
       />
