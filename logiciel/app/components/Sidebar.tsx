@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Truck, Map as MapIcon, Users, Calendar, Menu, LogOut } from "lucide-react";
+import { Home, Truck, Map as MapIcon, Users, Menu, LogOut, ShieldCheck } from "lucide-react";
 import { User } from "firebase/auth";
+import Link from "next/link";
+import RoleGuard from "./RoleGuard";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   user: User | null;
@@ -12,22 +13,15 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
-const menuItems = [
-  { name: "Accueil", icon: Home, href: "/accueil" },
-  { name: "Conducteurs & Flotte", icon: Truck, href: "/conducteurs-flotte" },
-  { name: "Tournées & Abonnements", icon: MapIcon, href: "#" },
-  { name: "Gestion des clients", icon: Users, href: "#" },
-  { name: "Planification", icon: Calendar, href: "#" },
-];
-
 export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
 
-  const isActive = (href: string) => {
-    if (href === "#") return false;
-    if (href === "/accueil") return pathname === "/accueil";
-    return pathname === href || pathname.startsWith(href + "/");
-  };
+  const menuItems = [
+    { name: "Accueil", icon: Home, href: "/" },
+    { name: "Conducteurs & Flotte", icon: Truck, href: "/fleet" },
+    { name: "Tournées & Abonnements", icon: MapIcon, href: "/tournees" },
+    { name: "Gestion des clients", icon: Users, href: "/clients" },
+  ];
 
   return (
     <aside
@@ -48,13 +42,13 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
       {/* Navigation */}
       <nav className="flex-1 space-y-4">
         {menuItems.map((item) => {
-          const active = isActive(item.href);
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.name}
               href={item.href}
               className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
-                active
+                isActive
                   ? "bg-red-50 text-opti-red font-bold"
                   : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
               }`}
@@ -62,7 +56,7 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
             >
               <item.icon
                 className={`w-5 h-5 shrink-0 ${
-                  active ? "text-opti-red" : "text-opti-blue"
+                  isActive ? "text-opti-red" : "text-opti-blue"
                 }`}
               />
 
@@ -72,6 +66,28 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
             </Link>
           );
         })}
+
+        <RoleGuard allowedRoles={["Admin"]}>
+          <Link
+            href="/admin/roles"
+            className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
+              pathname === "/admin/roles"
+                ? "bg-red-50 text-opti-red font-bold"
+                : "text-opti-blue hover:bg-gray-50 hover:text-opti-red font-semibold"
+            }`}
+            title={isCollapsed ? "Gestion du personnel" : ""}
+          >
+            <ShieldCheck
+              className={`w-5 h-5 shrink-0 ${
+                pathname === "/admin/roles" ? "text-opti-red" : "text-opti-blue"
+              }`}
+            />
+
+            {!isCollapsed && (
+              <span className="text-sm truncate">Gestion du personnel</span>
+            )}
+          </Link>
+        </RoleGuard>
       </nav>
 
       {/* User Profile (Bottom) */}
