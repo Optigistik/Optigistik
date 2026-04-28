@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import RoleGuard from "@/app/components/RoleGuard";
+import DashboardLayout from "@/app/components/DashboardLayout";
 import Link from "next/link";
-import { ArrowLeft, Plus, X, UserPlus, ShieldCheck, Users, Truck, Trash2, Pencil } from "lucide-react";
+import { 
+  ArrowLeft, Plus, X, UserPlus, ShieldCheck, 
+  Users, Truck, Trash2, Pencil 
+} from "lucide-react";
 
 type UserData = {
   uid: string;
@@ -45,7 +49,6 @@ export default function RolesAdminPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  // Charger la liste des utilisateurs depuis Firestore
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -66,42 +69,6 @@ export default function RolesAdminPage() {
     fetchUsers();
   }, []);
 
-  // Fonction pour changer le rôle
-  const handleRoleChange = async (targetUid: string, newRole: string) => {
-    if (!confirm(`Voulez-vous vraiment attribuer le rôle ${newRole} ?`)) return;
-    
-    setUpdatingId(targetUid);
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) throw new Error("Vous n'êtes pas connecté");
-
-      const response = await fetch("/api/users/set-role", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ targetUid, newRole }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la mise à jour");
-      }
-
-      alert("Rôle mis à jour avec succès !");
-      
-      // Mettre à jour l'UI localement
-      setUsers(users.map(u => u.uid === targetUid ? { ...u, role: newRole } : u));
-    } catch (error: any) {
-      alert("Erreur: " + error.message);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // Fonction pour créer un utilisateur via l'API
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError(null);
@@ -126,22 +93,15 @@ export default function RolesAdminPage() {
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erreur lors de la création");
 
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création");
-      }
-
-      // Succès
       setShowCreateModal(false);
       setNewName("");
       setNewEmail("");
       setNewPassword("");
       setNewRole("Lecteur");
-      
-      // Recharger la liste
       await fetchUsers();
       alert("Utilisateur créé avec succès !");
-
     } catch (error: any) {
       setCreateError(error.message);
     } finally {
@@ -149,10 +109,8 @@ export default function RolesAdminPage() {
     }
   };
 
-  // Fonction pour supprimer un utilisateur
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    
     setIsDeleting(true);
     try {
       const token = await auth.currentUser?.getIdToken();
@@ -167,17 +125,12 @@ export default function RolesAdminPage() {
         body: JSON.stringify({ targetUid: userToDelete.uid }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la suppression");
-      }
+      if (!response.ok) throw new Error("Erreur lors de la suppression");
 
       setShowDeleteModal(false);
       setUserToDelete(null);
       await fetchUsers();
       alert("Utilisateur supprimé avec succès !");
-
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -185,7 +138,6 @@ export default function RolesAdminPage() {
     }
   };
 
-  // Fonction pour ouvrir la modale d'édition
   const openEditModal = (user: UserData) => {
     setUserToEdit(user);
     setEditName(user.name || "");
@@ -195,14 +147,10 @@ export default function RolesAdminPage() {
     setShowEditModal(true);
   };
 
-  // Fonction pour mettre à jour un utilisateur via l'API
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userToEdit) return;
-    
-    setEditError(null);
     setIsUpdating(true);
-
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error("Session expirée");
@@ -221,31 +169,17 @@ export default function RolesAdminPage() {
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la mise à jour");
-      }
+      if (!response.ok) throw new Error("Erreur lors de la mise à jour");
 
       setShowEditModal(false);
       await fetchUsers();
       alert("Utilisateur mis à jour avec succès !");
-
     } catch (error: any) {
       setEditError(error.message);
     } finally {
       setIsUpdating(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-8 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mx-auto"></div>
-        <p className="mt-4 text-slate-500">Chargement des utilisateurs...</p>
-      </div>
-    );
-  }
 
   return (
     <RoleGuard 
@@ -271,12 +205,8 @@ export default function RolesAdminPage() {
         </div>
       }
     >
-      <div className="min-h-screen bg-[#F8FAFC] flex">
-        {/* Sidebar déjà présente via layout ou Dashboard, 
-            mais ici on traite la page comme un contenu autonome 
-            donc on s'assure que le container principal est bon */}
-        
-        <div className="flex-1 p-10">
+      <DashboardLayout>
+        <div className="flex-1">
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
@@ -302,45 +232,31 @@ export default function RolesAdminPage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <div className="bg-white p-8 rounded-[28px] shadow-sm border border-slate-100 flex items-center gap-6 transition-all hover:shadow-md">
-              <div className="bg-blue-50 p-4 rounded-2xl text-blue-600">
-                <Users className="w-8 h-8" />
-              </div>
+              <div className="bg-blue-50 p-4 rounded-2xl text-blue-600"><Users className="w-8 h-8" /></div>
               <div>
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">Total</p>
                 <h3 className="text-3xl font-bold text-opti-blue">{users.length}</h3>
               </div>
             </div>
             <div className="bg-white p-8 rounded-[28px] shadow-sm border border-slate-100 flex items-center gap-6 transition-all hover:shadow-md">
-              <div className="bg-purple-50 p-4 rounded-2xl text-purple-600">
-                <ShieldCheck className="w-8 h-8" />
-              </div>
+              <div className="bg-purple-50 p-4 rounded-2xl text-purple-600"><ShieldCheck className="w-8 h-8" /></div>
               <div>
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">Admins</p>
-                <h3 className="text-3xl font-bold text-opti-blue">
-                  {users.filter(u => u.role === 'Admin').length}
-                </h3>
+                <h3 className="text-3xl font-bold text-opti-blue">{users.filter(u => u.role?.toLowerCase() === 'admin').length}</h3>
               </div>
             </div>
             <div className="bg-white p-8 rounded-[28px] shadow-sm border border-slate-100 flex items-center gap-6 transition-all hover:shadow-md">
-              <div className="bg-orange-50 p-4 rounded-2xl text-orange-600">
-                <ShieldCheck className="w-8 h-8" />
-              </div>
+              <div className="bg-orange-50 p-4 rounded-2xl text-orange-600"><ShieldCheck className="w-8 h-8" /></div>
               <div>
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">Gestionnaires</p>
-                <h3 className="text-3xl font-bold text-opti-blue">
-                  {users.filter(u => u.role === 'Gestionnaire').length}
-                </h3>
+                <h3 className="text-3xl font-bold text-opti-blue">{users.filter(u => u.role?.toLowerCase() === 'gestionnaire').length}</h3>
               </div>
             </div>
             <div className="bg-white p-8 rounded-[28px] shadow-sm border border-slate-100 flex items-center gap-6 transition-all hover:shadow-md">
-              <div className="bg-green-50 p-4 rounded-2xl text-green-600">
-                <Truck className="w-8 h-8" />
-              </div>
+              <div className="bg-green-50 p-4 rounded-2xl text-green-600"><Truck className="w-8 h-8" /></div>
               <div>
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">Chauffeurs</p>
-                <h3 className="text-3xl font-bold text-opti-blue">
-                  {users.filter(u => u.role === 'Chauffeur').length}
-                </h3>
+                <h3 className="text-3xl font-bold text-opti-blue">{users.filter(u => u.role?.toLowerCase() === 'chauffeur').length}</h3>
               </div>
             </div>
           </div>
@@ -370,10 +286,10 @@ export default function RolesAdminPage() {
                       <td className="p-6">
                         <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm
-                            ${user.role === 'Admin' ? 'bg-purple-100 text-purple-600' : 
-                              user.role === 'Gestionnaire' ? 'bg-blue-100 text-blue-600' : 
+                            ${user.role?.toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-600' : 
+                              user.role?.toLowerCase() === 'gestionnaire' ? 'bg-blue-100 text-blue-600' : 
                               'bg-slate-100 text-slate-500'}`}>
-                            {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                            {(user.name || user.email).charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <p className="font-bold text-opti-blue text-lg mb-0.5">{user.name || "N/A"}</p>
@@ -381,279 +297,115 @@ export default function RolesAdminPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-6">
-                        <span className="text-slate-500 font-semibold text-sm">
-                          {typeof user.createdAt === "string" 
-                            ? user.createdAt 
-                            : user.createdAt?.toDate 
-                              ? user.createdAt.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) 
-                              : "N/A"}
-                        </span>
+                      <td className="p-6 font-semibold text-sm text-slate-500">
+                        {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : "N/A"}
                       </td>
                       <td className="p-6">
                         <span className={`inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider
-                          ${user.role === 'Admin' ? 'bg-purple-50 text-purple-600' : 
-                            user.role === 'Gestionnaire' ? 'bg-blue-50 text-blue-600' : 
-                            user.role === 'Chauffeur' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'}`}>
+                          ${user.role?.toLowerCase() === 'admin' ? 'bg-purple-50 text-purple-600' : 
+                            user.role?.toLowerCase() === 'gestionnaire' ? 'bg-blue-50 text-blue-600' : 
+                            'bg-slate-50 text-slate-500'}`}>
                           {user.role || "Aucun"}
                         </span>
                       </td>
                       <td className="p-6 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <button 
-                            onClick={() => openEditModal(user)}
-                            className={`p-3 text-slate-400 hover:text-opti-blue hover:bg-blue-50 rounded-xl transition-all
-                              ${(user.role === 'Admin' && auth.currentUser?.uid !== user.uid) ? 'opacity-0 pointer-events-none' : ''}`}
-                            title={user.uid === auth.currentUser?.uid ? "Modifier mon compte" : "Modifier l'utilisateur"}
-                          >
-                            <Pencil className="w-5 h-5" />
-                          </button>
-
-                          {(user.uid === auth.currentUser?.uid || user.role !== 'Admin') && (
-                            <button 
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setShowDeleteModal(true);
-                              }}
-                              className="p-3 text-slate-400 hover:text-opti-red hover:bg-red-50 rounded-xl transition-all"
-                              title={user.uid === auth.currentUser?.uid ? "Supprimer mon compte" : "Supprimer l'utilisateur"}
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          )}
+                          <button onClick={() => openEditModal(user)} className="p-3 text-slate-400 hover:text-opti-blue hover:bg-blue-50 rounded-xl transition-all"><Pencil className="w-5 h-5" /></button>
+                          <button onClick={() => { setUserToDelete(user); setShowDeleteModal(true); }} className="p-3 text-slate-400 hover:text-opti-red hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-5 h-5" /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {users.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="p-20 text-center">
-                        <div className="flex flex-col items-center">
-                          <div className="bg-slate-50 p-6 rounded-full mb-4 text-slate-300">
-                            <Users className="w-12 h-12" />
-                          </div>
-                          <p className="text-slate-400 font-bold text-lg">Aucun membre dans votre équipe</p>
-                          <p className="text-slate-300 text-sm">Commencez par ajouter votre premier collaborateur.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
 
-      {/* Modal de Création d'Utilisateur */}
+      {/* MODALE CRÉATION */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-6">
-              <div className="bg-red-50 p-3 rounded-2xl">
-                <UserPlus className="w-6 h-6 text-opti-red" />
-              </div>
-              <button 
-                onClick={() => setShowCreateModal(false)} 
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
+              <div className="bg-red-50 p-3 rounded-2xl"><UserPlus className="w-6 h-6 text-opti-red" /></div>
+              <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
             </div>
-
             <h2 className="text-2xl font-bold text-opti-blue mb-2">Ajouter un collaborateur</h2>
             <p className="text-slate-500 text-sm mb-8">Remplissez les informations pour créer un nouveau compte accès.</p>
-
             <form onSubmit={handleCreateUser} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Nom Complet</label>
-                <input 
-                  type="text" 
-                  required
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  placeholder="ex: Jean Dupont"
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
-                />
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Nom Complet</label>
+                <input type="text" required value={newName} onChange={e => setNewName(e.target.value)} placeholder="ex: Jean Dupont" className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Email Professionnel</label>
-                <input 
-                  type="email" 
-                  required
-                  value={newEmail}
-                  onChange={e => setNewEmail(e.target.value)}
-                  placeholder="jean.dupont@optigistik.fr"
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
-                />
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Email</label>
+                <input type="email" required value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="jean.dupont@optigistik.fr" className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Mot de passe provisoire</label>
-                <input 
-                  type="password" 
-                  required
-                  minLength={6}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
-                />
-                <p className="text-[10px] text-slate-400 mt-1 italic">Minimum 6 caractères</p>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Mot de passe provisoire</label>
+                <input type="password" required minLength={6} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Attribuer un Rôle</label>
-                <select 
-                  value={newRole}
-                  onChange={e => setNewRole(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer"
-                >
-                  {ROLES.map(role => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Rôle</label>
+                <select value={newRole} onChange={e => setNewRole(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer">
+                  {ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                 </select>
               </div>
-
-              {createError && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-100 text-opti-red text-xs font-medium animate-shake">
-                  {createError}
-                </div>
-              )}
-
+              {createError && <div className="p-4 bg-red-50 rounded-xl border border-red-100 text-opti-red text-xs font-medium">{createError}</div>}
               <div className="pt-4 flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit"
-                  disabled={isCreating}
-                  className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
-                >
-                  {isCreating ? "Création..." : "Confirmer"}
-                </button>
+                <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">Annuler</button>
+                <button type="submit" disabled={isCreating} className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50">{isCreating ? "Création..." : "Confirmer"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal de Confirmation de Suppression */}
+      {/* MODALE SUPPRESSION */}
       {showDeleteModal && userToDelete && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 text-center">
-            <div className="bg-red-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Trash2 className="w-10 h-10 text-opti-red" />
-            </div>
-            
+            <div className="bg-red-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 className="w-10 h-10 text-opti-red" /></div>
             <h2 className="text-2xl font-bold text-opti-blue mb-3">Supprimer l'accès ?</h2>
-            <p className="text-slate-500 mb-8 leading-relaxed">
-              Êtes-vous sûr de vouloir supprimer le compte de <span className="font-bold text-opti-blue">{userToDelete.name || userToDelete.email}</span> ? Cette action est irréversible.
-            </p>
-
+            <p className="text-slate-500 mb-8 leading-relaxed">Êtes-vous sûr de vouloir supprimer le compte de <span className="font-bold text-opti-blue">{userToDelete.name || userToDelete.email}</span> ? Cette action est irréversible.</p>
             <div className="flex gap-3">
-              <button 
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setUserToDelete(null);
-                }}
-                className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
-              >
-                Annuler
-              </button>
-              <button 
-                onClick={handleDeleteUser}
-                disabled={isDeleting}
-                className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
-              >
-                {isDeleting ? "Suppression..." : "Confirmer"}
-              </button>
+              <button onClick={() => { setShowDeleteModal(false); setUserToDelete(null); }} className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">Annuler</button>
+              <button onClick={handleDeleteUser} disabled={isDeleting} className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50">{isDeleting ? "Suppression..." : "Confirmer"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de Modification d'Utilisateur */}
+      {/* MODALE ÉDITION */}
       {showEditModal && userToEdit && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-6">
-              <div className="bg-blue-50 p-3 rounded-2xl">
-                <Pencil className="w-6 h-6 text-opti-blue" />
-              </div>
-              <button 
-                onClick={() => setShowEditModal(false)} 
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
+              <div className="bg-blue-50 p-3 rounded-2xl"><Pencil className="w-6 h-6 text-opti-blue" /></div>
+              <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
             </div>
-
             <h2 className="text-2xl font-bold text-opti-blue mb-2">Modifier le profil</h2>
             <p className="text-slate-500 text-sm mb-8">Mise à jour des informations de <span className="font-bold text-opti-blue">{userToEdit.name || userToEdit.email}</span>.</p>
-
             <form onSubmit={handleUpdateUser} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Nom Complet</label>
-                <input 
-                  type="text" 
-                  required
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
-                />
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Nom Complet</label>
+                <input type="text" required value={editName} onChange={e => setEditName(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Email Professionnel</label>
-                <input 
-                  type="email" 
-                  required
-                  value={editEmail}
-                  onChange={e => setEditEmail(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all"
-                />
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Email Professionnel</label>
+                <input type="email" required value={editEmail} onChange={e => setEditEmail(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Attribuer un Rôle</label>
-                <select 
-                  value={editRole}
-                  onChange={e => setEditRole(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer"
-                >
-                  {ROLES.map(role => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Rôle</label>
+                <select value={editRole} onChange={e => setEditRole(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer">
+                  {ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                 </select>
               </div>
-
-              {editError && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-100 text-opti-red text-xs font-medium">
-                  {editError}
-                </div>
-              )}
-
+              {editError && <div className="p-4 bg-red-50 rounded-xl border border-red-100 text-opti-red text-xs font-medium">{editError}</div>}
               <div className="pt-4 flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit"
-                  disabled={isUpdating}
-                  className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
-                >
-                  {isUpdating ? "Mise à jour..." : "Sauvegarder"}
-                </button>
+                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-3 text-slate-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">Annuler</button>
+                <button type="submit" disabled={isUpdating} className="flex-1 px-4 py-3 bg-opti-red text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50">{isUpdating ? "Mise à jour..." : "Sauvegarder"}</button>
               </div>
             </form>
           </div>
