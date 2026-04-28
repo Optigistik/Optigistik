@@ -3,11 +3,11 @@
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Sidebar from "./Sidebar";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // On cache la sidebar sur la page de login ou si l'utilisateur n'est pas connecté
