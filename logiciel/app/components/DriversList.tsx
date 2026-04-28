@@ -1,0 +1,107 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Users, UserPlus, Pencil } from "lucide-react";
+import { Driver } from "@/types";
+import { getDrivers } from "@/services/drivers";
+import DriverEditModal from "./DriverEditModal";
+
+interface DriversListProps {
+  onSelectDriver: (driver: Driver) => void;
+}
+
+const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
+  EN_MISSION: { label: "EN MISSION", bg: "bg-emerald-800", text: "text-white" },
+  DISPONIBLE: { label: "DISPONIBLE", bg: "bg-blue-100", text: "text-blue-800" },
+  INDISPONIBLE: { label: "INDISPONIBLE", bg: "bg-amber-500", text: "text-white" },
+};
+
+export default function DriversList({ onSelectDriver }: DriversListProps) {
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      const data = await getDrivers();
+      setDrivers(data || []);
+      setLoading(false);
+    };
+    fetchDrivers();
+  }, []);
+
+  const getInitialsColor = (firstName: string) => {
+    const colors = ["bg-rose-500", "bg-blue-600", "bg-emerald-600", "bg-violet-600", "bg-amber-600", "bg-cyan-600"];
+    return colors[firstName.charCodeAt(0) % colors.length];
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-opti-blue"></div>
+    </div>
+  );
+
+  return (
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+            <Users className="w-5 h-5 text-opti-blue" />
+          </div>
+          <h2 className="text-xl font-bold text-opti-blue font-display">Liste des Conducteurs</h2>
+        </div>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2 bg-opti-blue text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-opti-blue/90 transition-colors cursor-pointer"
+        >
+          <UserPlus className="w-4 h-4" /> Ajouter un conducteur
+        </button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-gray-100">
+              <th className="py-3 px-4 text-xs font-bold text-gray-400 uppercase">Nom / Prénom</th>
+              <th className="py-3 px-4 text-xs font-bold text-gray-400 uppercase">Statut</th>
+              <th className="py-3 px-4 text-xs font-bold text-gray-400 uppercase text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {drivers.map((driver) => (
+              <tr key={driver.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold ${getInitialsColor(driver.firstName)}`}>
+                      {driver.firstName.charAt(0)}{driver.lastName.charAt(0)}
+                    </div>
+                    <span className="text-sm font-bold text-opti-blue">{driver.lastName.toUpperCase()} {driver.firstName}</span>
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${statusConfig[driver.status]?.bg} ${statusConfig[driver.status]?.text}`}>
+                    {statusConfig[driver.status]?.label || "ACTIF"}
+                  </span>
+                </td>
+                <td className="py-4 px-4 text-right">
+                  <button
+                    onClick={() => onSelectDriver(driver)}
+                    className="p-2 text-gray-400 hover:text-opti-blue hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <DriverEditModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={(newDriver) => setDrivers((prev) => [...prev, newDriver])}
+      />
+    </div>
+  );
+}

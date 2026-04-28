@@ -7,13 +7,15 @@ import MessagesList from "./MessagesList";
 import AlertsList from "./AlertsList";
 import MapSection from "./MapSection";
 import FleetSection from "../fleet/page";
+import { UserProfile } from "../context/AuthContext";
 
 interface DashboardProps {
   user: User | null;
+  profile: UserProfile | null; 
   onLogout: () => void;
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({ user, profile, onLogout }: DashboardProps) { // 3. Récupération ici
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
 
@@ -21,6 +23,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     <div className="flex min-h-screen bg-white font-sans">
       <Sidebar
         user={user}
+        profile={profile}
         onLogout={onLogout}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -41,7 +44,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           <FleetSection />
         )}
         
-        {/* Placeholder pour les autres onglets */}
         {activeTab !== "home" && activeTab !== "fleet" && (
           <div className="flex items-center justify-center h-full text-gray-400">
             En cours de développement...

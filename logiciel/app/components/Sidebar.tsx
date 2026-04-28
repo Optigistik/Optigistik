@@ -5,20 +5,29 @@ import { User } from "firebase/auth";
 import Link from "next/link";
 import RoleGuard from "./RoleGuard";
 import { usePathname } from "next/navigation";
+import { UserProfile } from "../context/AuthContext"; // 1. Importe le type
 
 interface SidebarProps {
   user: User | null;
+  profile: UserProfile | null; // 2. Ajoute profile ici
   onLogout: () => void;
   isCollapsed: boolean;
   toggleSidebar: () => void;
 }
 
-export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: SidebarProps) {
+// 3. Récupère profile dans les arguments
+export default function Sidebar({ 
+  user, 
+  profile, 
+  onLogout, 
+  isCollapsed, 
+  toggleSidebar 
+}: SidebarProps) {
   const pathname = usePathname();
 
   const menuItems = [
     { name: "Accueil", icon: Home, href: "/" },
-    { name: "Conducteurs & Flotte", icon: Truck, href: "/fleet" },
+    { name: "Conducteurs & Flotte", icon: Truck, href: "/conducteurs-flotte" }, // Vérifie bien ce href
     { name: "Tournées & Abonnements", icon: MapIcon, href: "/tournees" },
     { name: "Gestion des clients", icon: Users, href: "/clients" },
   ];
@@ -33,7 +42,7 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
       <div className="flex items-center mb-10">
         <button
           onClick={toggleSidebar}
-          className="p-2 hover:bg-gray-100 rounded-lg text-opti-blue transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg text-opti-blue transition-colors cursor-pointer"
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -67,7 +76,7 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
           );
         })}
 
-        <RoleGuard allowedRoles={["Admin"]}>
+        <RoleGuard allowedRoles={["admin"]}>
           <Link
             href="/admin/roles"
             className={`w-full flex items-center gap-4 py-3 px-4 rounded-l-full transition-all group relative ${
@@ -93,31 +102,23 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
       {/* User Profile (Bottom) */}
       <div className="pr-4 mt-auto">
         <div className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200 shadow-sm bg-white">
-          {user?.photoURL ? (
-            <img 
-              src={user.photoURL} 
-              alt="Profil" 
-              className="w-10 h-10 rounded-full shrink-0 object-cover border border-gray-100"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-opti-red flex items-center justify-center text-white font-bold shrink-0">
-              {user?.displayName 
-                ? user.displayName.charAt(0).toUpperCase() 
-                : user?.email 
-                  ? user.email.charAt(0).toUpperCase() 
-                  : 'U'}
-            </div>
-          )}
+          <div className="w-10 h-10 rounded-full bg-opti-red flex items-center justify-center text-white font-bold shrink-0">
+            {profile?.name 
+              ? profile.name.charAt(0).toUpperCase() 
+              : user?.email?.charAt(0).toUpperCase() || 'U'}
+          </div>
 
           {!isCollapsed && (
             <>
               <div className="flex-1 min-w-0">
                 <p 
                   className="text-sm font-bold text-opti-blue truncate"
-                  title={user?.displayName || user?.email || "Utilisateur"}
                 >
-                  {user?.displayName || user?.email?.split('@')[0] || "Utilisateur"}
+                  {profile?.name || user?.email?.split('@')[0] || "Utilisateur"}
+                </p>
+                {/* Petit bonus : afficher le rôle sous le nom */}
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                  {profile?.role || 'Membre'}
                 </p>
               </div>
               <button

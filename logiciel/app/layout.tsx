@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo_Black, Open_Sans } from "next/font/google";
+import { AuthProvider } from "@/app/context/AuthContext";
 import "./globals.css";
 
 const archivoBlack = Archivo_Black({
@@ -17,8 +18,6 @@ export const metadata: Metadata = {
   title: "Optigistik",
   description: "Portail Transporteur B2B",
 };
-
-import { AuthProvider } from "@/app/context/AuthContext";
 
 export default function RootLayout({
   children,
