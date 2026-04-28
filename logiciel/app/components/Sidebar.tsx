@@ -19,7 +19,7 @@ export default function Sidebar({ user, onLogout, isCollapsed, toggleSidebar }: 
   const menuItems = [
     { name: "Accueil", icon: Home, href: "/" },
     { name: "Conducteurs & Flotte", icon: Truck, href: "/fleet" },
-    { name: "Tournées & Abonnements", icon: MapIcon, href: "/tours" },
+    { name: "Tournées & Abonnements", icon: MapIcon, href: "/tournees" },
     { name: "Gestion des clients", icon: Users, href: "/clients" },
   ];
 
