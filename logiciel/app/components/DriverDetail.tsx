@@ -226,7 +226,16 @@ export default function DriverDetail({ driver, onUpdate, onBack }: DriverDetailP
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ancienneté</p>
-                  <p className="text-sm font-semibold text-opti-blue">{driver.seniority}</p>
+                  <p className="text-sm font-semibold text-opti-blue">
+                    {(() => {
+                      if (!driver.seniority || !driver.seniority.includes('-')) return driver.seniority;
+                      const hireDate = new Date(driver.seniority);
+                      if (isNaN(hireDate.getTime())) return driver.seniority;
+                      const diffTime = Math.abs(new Date().getTime() - hireDate.getTime());
+                      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                      return `${hireDate.toLocaleDateString('fr-FR')} (${diffDays} jours)`;
+                    })()}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Langues</p>

@@ -21,6 +21,10 @@ type UserData = {
 
 const ROLES = ["Admin", "Gestionnaire", "Lecteur", "Chauffeur"];
 
+const COMMON_LANGUAGES = [
+  "Abkhaze", "Afar", "Afrikaans", "Akan", "Albanais", "Allemand", "Amharique", "Arabe", "Aragonais", "Arménien", "Assamais", "Avar", "Avestique", "Aymara", "Azéri", "Bambara", "Bachkir", "Basque", "Bengali", "Bihari", "Bislama", "Bosniaque", "Breton", "Bulgare", "Birman", "Catalan", "Chamorro", "Tchétchène", "Chichewa", "Chinois", "Tchouvache", "Cornique", "Corse", "Crie", "Croate", "Tchèque", "Danois", "Dhivehi", "Néerlandais", "Dzongkha", "Anglais", "Espéranto", "Estonien", "Ewe", "Féroïen", "Fidjien", "Finnois", "Français", "Frison occidental", "Fula", "Galicien", "Géorgien", "Grec", "Guarani", "Gujarati", "Haïtien", "Haoussa", "Hébreu", "Herero", "Hindi", "Hiri Motu", "Hongrois", "Interlingua", "Indonésien", "Interlingue", "Inuktitut", "Inupiaq", "Irlandais", "Islandais", "Italien", "Japonais", "Javanais", "Kalaallisut", "Kannada", "Kanouri", "Cachemiri", "Kazakh", "Khmer", "Kikuyu", "Kinyarwanda", "Kirghize", "Komi", "Kongo", "Coréen", "Kurde", "Kwanyama", "Lao", "Latin", "Letton", "Limbourgeois", "Lingala", "Lituanien", "Luba-Katanga", "Luxembourgeois", "Macédonien", "Malgache", "Malais", "Malayalam", "Maltais", "Manx", "Maori", "Marathi", "Marshallais", "Mongol", "Nauru", "Navajo", "Ndébélé du Nord", "Ndébélé du Sud", "Ndonga", "Népalais", "Norvégien", "Norvégien Bokmål", "Norvégien Nynorsk", "Occitan", "Ojibwé", "Oriya", "Oromo", "Ossète", "Pali", "Panjabi", "Pashto", "Persan", "Polonais", "Portugais", "Quechua", "Romanche", "Kirundi", "Roumain", "Russe", "Sami du Nord", "Samoan", "Sango", "Sanskrit", "Sarde", "Écossais", "Serbe", "Shona", "Sindhi", "Cinghalais", "Slovaque", "Slovène", "Somali", "Sotho du Sud", "Espagnol", "Soudanais", "Swahili", "Swati", "Suédois", "Tagalog", "Tahitien", "Tadjik", "Tamoul", "Tatar", "Telugu", "Thaï", "Tibétain", "Tigrinya", "Tonga", "Tsonga", "Tswana", "Turc", "Turkmène", "Twi", "Ouïghour", "Ukrainien", "Ourdou", "Ouzbek", "Venda", "Vietnamien", "Volapük", "Wallon", "Gallois", "Wolof", "Xhosa", "Yiddish", "Yoruba", "Zhuang", "Zoulou"
+];
+
 export default function RolesAdminPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -476,13 +480,24 @@ export default function RolesAdminPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Langues</label>
-                      <input type="text" value={driverLanguages} onChange={e => setDriverLanguages(e.target.value)} placeholder="Français" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
+                      <select 
+                        value={driverLanguages} 
+                        onChange={e => setDriverLanguages(e.target.value)} 
+                        className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer"
+                      >
+                        <option value="">Sélectionner une langue</option>
+                        <option value="Français">Français</option>
+                        <option disabled>────────────────────</option>
+                        {COMMON_LANGUAGES.filter(l => l !== "Français").map(lang => (
+                          <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Ancienneté</label>
-                    <input type="text" value={driverSeniority} onChange={e => setDriverSeniority(e.target.value)} placeholder="Depuis 2019" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date d'embauche (Ancienneté)</label>
+                    <input type="date" value={driverSeniority} onChange={e => setDriverSeniority(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
                   </div>
 
                   <div className="flex items-center gap-3 mt-2">
@@ -606,13 +621,24 @@ export default function RolesAdminPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Langues</label>
-                      <input type="text" value={driverLanguages} onChange={e => setDriverLanguages(e.target.value)} placeholder="Français" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
+                      <select 
+                        value={driverLanguages} 
+                        onChange={e => setDriverLanguages(e.target.value)} 
+                        className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none bg-white transition-all cursor-pointer"
+                      >
+                        <option value="">Sélectionner une langue</option>
+                        <option value="Français">Français</option>
+                        <option disabled>────────────────────</option>
+                        {COMMON_LANGUAGES.filter(l => l !== "Français").map(lang => (
+                          <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Ancienneté</label>
-                    <input type="text" value={driverSeniority} onChange={e => setDriverSeniority(e.target.value)} placeholder="Depuis 2019" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date d'embauche (Ancienneté)</label>
+                    <input type="date" value={driverSeniority} onChange={e => setDriverSeniority(e.target.value)} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm text-opti-blue font-medium focus:ring-2 focus:ring-opti-red outline-none transition-all" />
                   </div>
 
                   <div className="flex items-center gap-3 mt-2">
