@@ -58,9 +58,17 @@ service cloud.firestore {
     match /typologies/{docId} {
       // Lecture : Admin, Gestionnaire et Lecteur peuvent consulter (Chauffeur exclu)
       allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
-      
+
       // Écriture : Accès configuration critique => UNIQUEMENT l'Admin
       allow write: if isAuthenticated() && getUserRole() == 'Admin';
+    }
+
+    // ---------------------------------------------------------
+    // MATRICES DE DISTANCE (distance_matrices)
+    // ---------------------------------------------------------
+    match /distance_matrices/{sessionId} {
+      allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
+      allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
     }
 
   }

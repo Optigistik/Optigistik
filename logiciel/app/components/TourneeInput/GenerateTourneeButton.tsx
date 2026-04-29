@@ -6,7 +6,8 @@ import { geocodeAddress } from '@/services/geocoding'
 import { generateClusters, ClusterNode, ClusteringResult } from '@/services/clustering'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Check, Copy, X, Loader2, MapPin, Group, AlertCircle, Send, Code } from 'lucide-react'
+import { Check, Copy, X, Loader2, MapPin, Group, AlertCircle, Send, Code, Grid3X3 } from 'lucide-react'
+import { generateAndSaveDistanceMatrix, MatrixPoint } from '@/services/distanceMatrix'
 
 export default function GenerateTourneeButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -16,6 +17,7 @@ export default function GenerateTourneeButton() {
   const [copied, setCopied] = useState(false)
   const [showJson, setShowJson] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [matrixStatus, setMatrixStatus] = useState<'idle' | 'computing' | 'done' | 'error'>('idle')
 
   const session = useDeliveryStore((s) => s.session)
   const selectValidationErrors = useDeliveryStore((s) => s.selectValidationErrors)
@@ -29,6 +31,7 @@ export default function GenerateTourneeButton() {
     setResult(null)
     setUnlocated([])
     setShowJson(false)
+    setMatrixStatus('idle')
 
     const nodes: ClusterNode[] = []
     const failed: string[] = []
@@ -53,14 +56,31 @@ export default function GenerateTourneeButton() {
       }
     }
 
-    // 2. Clustering
+    // 2. Géocodage du dépôt de départ et du point final (en parallèle)
+    const [originGeo, endGeo] = await Promise.all([
+      geocodeAddress(session.origin_node.address),
+      geocodeAddress(session.end_node.address),
+    ])
+
+    // 3. Clustering (synchrone, instantané)
     const clusteringResult = generateClusters(nodes)
-    
-    // 3. Sauvegarde dans Firebase
+
+    // 4. Construction des points pour la matrice : dépôt + livraisons + retour
+    const matrixPoints: MatrixPoint[] = []
+    if (originGeo) {
+      matrixPoints.push({ id: 'depot_origin', address: session.origin_node.address, lat: originGeo.lat, lng: originGeo.lng, role: 'origin' })
+    }
+    for (const node of nodes) {
+      matrixPoints.push({ id: node.id, address: node.address, lat: node.lat, lng: node.lng, role: 'delivery' })
+    }
+    if (endGeo) {
+      matrixPoints.push({ id: 'depot_end', address: session.end_node.address, lat: endGeo.lat, lng: endGeo.lng, role: 'end' })
+    }
+
+    // 5. Sauvegarde des clusters (bloquant, rapide)
     setIsSaving(true)
     try {
-      const sessionRef = doc(db, 'delivery_sessions', session.id)
-      await updateDoc(sessionRef, {
+      await updateDoc(doc(db, 'delivery_sessions', session.id), {
         clusters: clusteringResult.clusters,
         unlocated_points: failed,
         updatedAt: new Date()
@@ -71,9 +91,21 @@ export default function GenerateTourneeButton() {
       setIsSaving(false)
     }
 
+    // 6. Affichage des résultats immédiatement
     setResult(clusteringResult)
     setUnlocated(failed)
     setIsProcessing(false)
+
+    // 7. Calcul de la matrice en arrière-plan (non bloquant pour l'UI)
+    if (matrixPoints.length >= 2) {
+      setMatrixStatus('computing')
+      generateAndSaveDistanceMatrix(session.id, matrixPoints)
+        .then(() => setMatrixStatus('done'))
+        .catch((err) => {
+          console.error('Erreur matrice (non bloquant):', err)
+          setMatrixStatus('error')
+        })
+    }
   }
 
   const handleCopyJSON = () => {
@@ -201,6 +233,24 @@ export default function GenerateTourneeButton() {
                   <Check className="w-3 h-3" />
                   Firebase Synchronisé
                 </div>
+                {matrixStatus === 'computing' && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-blue-600 bg-blue-50 rounded-xl mr-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Matrice en calcul...
+                  </div>
+                )}
+                {matrixStatus === 'done' && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-xl mr-2">
+                    <Grid3X3 className="w-3 h-3" />
+                    Matrice calculée
+                  </div>
+                )}
+                {matrixStatus === 'error' && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-orange-600 bg-orange-50 rounded-xl mr-2">
+                    <AlertCircle className="w-3 h-3" />
+                    Matrice non disponible
+                  </div>
+                )}
                 <button 
                   onClick={() => setIsOpen(false)}
                   className="px-6 py-3 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition-colors"
