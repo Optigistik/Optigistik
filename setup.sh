@@ -10,4 +10,4 @@ else
   echo "Données OSM France déjà présentes, pas de téléchargement."
 fi
 
-docker-compose up --build
+docker compose up --build
