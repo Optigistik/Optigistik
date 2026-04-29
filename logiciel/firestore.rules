@@ -63,5 +63,21 @@ service cloud.firestore {
       allow write: if isAuthenticated() && getUserRole() == 'Admin';
     }
 
+    // ---------------------------------------------------------
+    // CONDUCTEURS (drivers)
+    // ---------------------------------------------------------
+    match /drivers/{driverId} {
+      // Lecture : 
+      // - Admin, Gestionnaire et Lecteur peuvent tout voir
+      // - Un chauffeur peut voir son propre profil technique
+      allow read: if isAuthenticated() && (
+        getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'] ||
+        (getUserRole() == 'Chauffeur' && request.auth.uid == driverId)
+      );
+      
+      // Écriture : Seul l'Admin peut modifier les fiches techniques des chauffeurs
+      allow write: if isAuthenticated() && getUserRole() == 'Admin';
+    }
+
   }
 }
