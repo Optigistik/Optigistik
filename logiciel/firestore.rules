@@ -1,85 +1,57 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Fonction utile pour récupérer facilement le rôle depuis le Custom Claim (JWT)
+
     function getUserRole() {
-      // Si le token n'a pas de rôle (nouvel utilisateur), on retourne null
       return request.auth != null ? request.auth.token.role : null;
     }
-    
-    // Vérifie si l'utilisateur est connecté
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // ---------------------------------------------------------
-    // UTILISATEURS (users)
-    // ---------------------------------------------------------
     match /users/{userId} {
-      // Un utilisateur peut lire son propre profil, l'Admin peut tout lire
       allow read: if isAuthenticated() && (request.auth.uid == userId || getUserRole() == 'Admin');
-      
-      // Seul un Admin peut créer, modifier ou supprimer des utilisateurs
       allow write: if isAuthenticated() && getUserRole() == 'Admin';
     }
 
-    // ---------------------------------------------------------
-    // TOURNEES (tournees)
-    // ---------------------------------------------------------
     match /tournees/{tourneeId} {
-      // Lecture :
-      // - Admin, Gestionnaire, Lecteur voient toutes les tournées
-      // - Chauffeur ne voit que les siennes (le champ 'driverId' doit correspondre à son UID)
       allow read: if isAuthenticated() && (
-        getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'] || 
+        getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'] ||
         (getUserRole() == 'Chauffeur' && resource.data.driverId == request.auth.uid)
       );
-      
-      // Écriture (Création/Modification/Suppression) :
-      // - Seuls l'Admin et le Gestionnaire peuvent modifier les tournées
       allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
     }
 
-    // ---------------------------------------------------------
-    // FLOTTE / CAMIONS (camions)
-    // ---------------------------------------------------------
-    match /camions/{camionId} {
-      // Lecture : Le Chauffeur n'a pas accès à la flotte, les autres oui
+    match /vehicles/{vehicleId} {
       allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
-      
-      // Écriture : Admin et Gestionnaire gèrent la flotte
       allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
     }
 
-    // ---------------------------------------------------------
-    // TYPOLOGIES / CONFIGURATION (typologies)
-    // ---------------------------------------------------------
     match /typologies/{docId} {
-      // Lecture : Admin, Gestionnaire et Lecteur peuvent consulter (Chauffeur exclu)
       allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
-
-      // Écriture : Accès configuration critique => UNIQUEMENT l'Admin
       allow write: if isAuthenticated() && getUserRole() == 'Admin';
     }
 
-    // ---------------------------------------------------------
-    // CONDUCTEURS (drivers)
-    // ---------------------------------------------------------
     match /drivers/{driverId} {
-      // Lecture : 
-      // - Admin, Gestionnaire et Lecteur peuvent tout voir
-      // - Un chauffeur peut voir son propre profil technique
       allow read: if isAuthenticated() && (
         getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'] ||
         (getUserRole() == 'Chauffeur' && request.auth.uid == driverId)
       );
-      
-      // Écriture : Seul l'Admin peut modifier les fiches techniques des chauffeurs
       allow write: if isAuthenticated() && getUserRole() == 'Admin';
-    // MATRICES DE DISTANCE (distance_matrices)
-    // ---------------------------------------------------------
+    }
+
+    match /delivery_sessions/{sessionId} {
+      allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
+      allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
+    }
+
     match /distance_matrices/{sessionId} {
+      allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
+      allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
+    }
+
+    match /solve_results/{sessionId} {
       allow read: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire', 'Lecteur'];
       allow write: if isAuthenticated() && getUserRole() in ['Admin', 'Gestionnaire'];
     }

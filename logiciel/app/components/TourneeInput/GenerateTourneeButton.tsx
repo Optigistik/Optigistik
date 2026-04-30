@@ -20,6 +20,9 @@ export default function GenerateTourneeButton() {
   const [isSaving, setIsSaving] = useState(false)
   const [matrixStatus, setMatrixStatus] = useState<'idle' | 'computing' | 'done' | 'error'>('idle')
   const [matrixResult, setMatrixResult] = useState<DistanceMatrixResult | null>(null)
+  const [solveStatus, setSolveStatus] = useState<'idle' | 'solving' | 'done' | 'error'>('idle')
+  const [solveResult, setSolveResult] = useState<any | null>(null)
+  const [solveError, setSolveError] = useState<string | null>(null)
 
   const session = useDeliveryStore((s) => s.session)
   const selectValidationErrors = useDeliveryStore((s) => s.selectValidationErrors)
@@ -36,6 +39,8 @@ export default function GenerateTourneeButton() {
     setMatrixStatus('idle')
     setMatrixResult(null)
     setShowMatrix(false)
+    setSolveStatus('idle')
+    setSolveResult(null)
 
     const nodes: ClusterNode[] = []
     const failed: string[] = []
@@ -112,6 +117,28 @@ export default function GenerateTourneeButton() {
           console.error('Erreur matrice (non bloquant):', err)
           setMatrixStatus('error')
         })
+    }
+  }
+
+  const handleSolve = async () => {
+    if (!session) return
+    setSolveStatus('solving')
+    setSolveResult(null)
+    setSolveError(null)
+    try {
+      const res = await fetch('/api/solve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: session.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue')
+      setSolveResult(data)
+      setSolveStatus('done')
+    } catch (err: any) {
+      console.error('Erreur optimisation:', err)
+      setSolveError(err.message ?? 'Erreur inconnue')
+      setSolveStatus('error')
     }
   }
 
@@ -338,13 +365,31 @@ export default function GenerateTourneeButton() {
                 >
                   Fermer
                 </button>
-                <button 
-                  disabled={isProcessing || !result}
-                  onClick={() => alert('Tournée envoyée au calcul !')}
+                {solveStatus === 'solving' && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-purple-600 bg-purple-50 rounded-xl mr-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Optimisation en cours...
+                  </div>
+                )}
+                {solveStatus === 'done' && solveResult && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-green-600 bg-green-50 rounded-xl mr-2">
+                    <Check className="w-3 h-3" />
+                    {solveResult.vehicles?.length ?? 0} tournée(s) — {solveResult.summary?.unperformed_nodes?.length ?? 0} rejeté(s)
+                  </div>
+                )}
+                {solveStatus === 'error' && (
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl mr-2" title={solveError ?? ''}>
+                    <AlertCircle className="w-3 h-3" />
+                    {solveError ? solveError.slice(0, 60) + (solveError.length > 60 ? '…' : '') : 'Échec optimisation'}
+                  </div>
+                )}
+                <button
+                  disabled={isProcessing || !result || matrixStatus !== 'done' || solveStatus === 'solving'}
+                  onClick={handleSolve}
                   className="flex items-center gap-2 px-8 py-3 rounded-xl bg-opti-red text-white text-sm font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-40"
                 >
                   <Send className="w-4 h-4" />
-                  Lancer l'optimisation
+                  {solveStatus === 'solving' ? 'Calcul...' : 'Lancer l\'optimisation'}
                 </button>
               </div>
             </div>

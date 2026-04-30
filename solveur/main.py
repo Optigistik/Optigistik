@@ -1,222 +1,265 @@
+import traceback
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 
-app = FastAPI(title="Optigistik Solveur OR-Tools", version="1.0")
+app = FastAPI(title="Optigistik Solveur OR-Tools", version="2.0")
 
 @app.get("/")
 def read_root():
     return {"status": "ok", "message": "Le solveur d'optimisation logistique est en ligne."}
 
-# ==========================================
-# MODÈLES DE DONNÉES (Input)
-# ==========================================
-class TimeWindow(BaseModel):
-    start: int # en secondes depuis 00:00
-    end: int   # en secondes depuis 00:00
 
-class Node(BaseModel):
+# ==========================================
+# MODÈLES D'ENTRÉE
+# ==========================================
+
+class TimeWindow(BaseModel):
+    start: int
+    end: int
+
+class PointInput(BaseModel):
     id: str
-    demand: int # Nombre de palettes (0 pour le dépôt)
-    service_time: int # Durée de déchargement en secondes
+    role: str
+    address: str
+    demand: int
+    service_time: int
     time_window: Optional[TimeWindow] = None
 
-class Vehicle(BaseModel):
+class VehicleInput(BaseModel):
     id: str
-    capacity: int # Capacité max en palettes
-    max_service_time: int # Ex: 12h (43200s) ou 10h (36000s) pour la nuit
-    is_night_shift: bool
+    name: str
+    plate: str
+    capacity: int
+    driver_id: str
+    driver_name: str
 
-class OptimizationRequest(BaseModel):
-    distance_matrix: List[List[int]] # Matrice de distances (en mètres)
-    time_matrix: List[List[int]]     # Matrice de temps (en secondes)
-    nodes: List[Node]                # Liste des points (Index 0 = Dépôt)
-    vehicles: List[Vehicle]          # Liste des camions disponibles
+class SolveRequest(BaseModel):
+    session_id: str
+    points: List[PointInput]
+    duration_matrix: List[List[float]]
+    distance_matrix: List[List[float]]
+    vehicles: List[VehicleInput]
+    shift_start: int = 28800
+
 
 # ==========================================
-# LOGIQUE OR-TOOLS
+# UTILITAIRES
 # ==========================================
+
+def seconds_to_hhmm(seconds: int) -> str:
+    h, rem = divmod(max(0, int(seconds)), 3600)
+    m = rem // 60
+    return f"{h:02d}:{m:02d}"
+
+def is_night_shift(points: List[PointInput]) -> bool:
+    for p in points:
+        if p.role == "delivery" and p.time_window:
+            if p.time_window.start < 18000 or p.time_window.end > 79200:
+                return True
+    return False
+
+
+# ==========================================
+# SOLVEUR OR-TOOLS
+# ==========================================
+
 @app.post("/api/optimize")
-def optimize_route(request: OptimizationRequest):
-    # 1. Préparation des données pour OR-Tools
-    data = {}
-    data['distance_matrix'] = request.distance_matrix
-    data['time_matrix'] = request.time_matrix
-    data['demands'] = [node.demand for node in request.nodes]
-    data['vehicle_capacities'] = [v.capacity for v in request.vehicles]
-    data['num_vehicles'] = len(request.vehicles)
-    data['depot'] = 0
-    data['time_windows'] = [
-        (n.time_window.start, n.time_window.end) if n.time_window else (0, 24*3600)
-        for n in request.nodes
-    ]
-    data['service_times'] = [node.service_time for node in request.nodes]
-    data['vehicle_max_times'] = [v.max_service_time for v in request.vehicles]
+def optimize_route(request: SolveRequest):
+    try:
+        points = request.points
+        vehicles = request.vehicles
+        n = len(points)
+        num_vehicles = len(vehicles)
+        shift_start = request.shift_start
 
-    # 2. Création des Managers
-    manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']), data['num_vehicles'], data['depot'])
-    routing = pywrapcp.RoutingModel(manager)
+        if num_vehicles == 0:
+            raise HTTPException(status_code=400, detail="Aucun véhicule disponible.")
+        if n < 3:
+            raise HTTPException(status_code=400, detail="Minimum 3 points requis.")
 
-    # 3. Fonction de coût : Distance
-    def distance_callback(from_index, to_index):
-        from_node = manager.IndexToNode(from_index)
-        to_node = manager.IndexToNode(to_index)
-        return data['distance_matrix'][from_node][to_node]
+        depot_start_idx = 0
+        depot_end_idx = n - 1
 
-    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
-    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index) # Priorise la minimisation de la distance
+        night = is_night_shift(points)
+        max_service_seconds = 36000 if night else 43200
 
-    # 4. Dimension : Capacité (Palettes)
-    def demand_callback(from_index):
-        from_node = manager.IndexToNode(from_index)
-        return data['demands'][from_node]
+        duration_matrix = [[int(v) for v in row] for row in request.duration_matrix]
+        distance_matrix = [[int(v) for v in row] for row in request.distance_matrix]
 
-    demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
-    routing.AddDimensionWithVehicleCapacity(
-        demand_callback_index,
-        0,  # pas de capacité bonus
-        data['vehicle_capacities'],  # limites strictes par camion
-        True,  # on commence à 0 palette
-        'Capacity'
-    )
+        demands = [p.demand for p in points]
+        service_times = [p.service_time for p in points]
+        capacities = [max(1, v.capacity) for v in vehicles]
 
-    # 5. Dimension : Temps (Trajet + Service + Fenêtres Horaires)
-    def time_callback(from_index, to_index):
-        from_node = manager.IndexToNode(from_index)
-        to_node = manager.IndexToNode(to_index)
-        # Temps total = temps de trajet + temps de service au client précédent
-        return data['time_matrix'][from_node][to_node] + data['service_times'][from_node]
+        time_windows = []
+        for p in points:
+            if p.role in ("origin", "end"):
+                time_windows.append((shift_start, shift_start + max_service_seconds))
+            elif p.time_window:
+                time_windows.append((p.time_window.start, p.time_window.end))
+            else:
+                time_windows.append((shift_start, shift_start + max_service_seconds))
 
-    time_callback_index = routing.RegisterTransitCallback(time_callback)
-    routing.AddDimensionWithVehicleCapacity(
-        time_callback_index,
-        3600,  # slack : le chauffeur peut attendre jusqu'à 1h devant le client si arrivé en avance
-        data['vehicle_max_times'],  # plafond RSE max (ex: 12h)
-        False, 
-        'Time'
-    )
+        starts = [depot_start_idx] * num_vehicles
+        ends = [depot_end_idx] * num_vehicles
 
-    time_dimension = routing.GetDimensionOrDie('Time')
+        manager = pywrapcp.RoutingIndexManager(n, num_vehicles, starts, ends)
+        routing = pywrapcp.RoutingModel(manager)
 
-    # Application des fenêtres horaires pour chaque point
-    for location_idx, time_window in enumerate(data['time_windows']):
-        if location_idx == data['depot']:
-            continue
-        index = manager.NodeToIndex(location_idx)
-        time_dimension.CumulVar(index).SetRange(time_window[0], time_window[1])
+        def distance_callback(from_index, to_index):
+            i = manager.IndexToNode(from_index)
+            j = manager.IndexToNode(to_index)
+            return distance_matrix[i][j]
 
-    # 6. Nœuds irréalisables (Pénalités de rejet)
-    # On assigne une très forte pénalité mathématique (1 Million) si le point est sauté.
-    penalty = 1000000
-    for node in range(1, len(data['time_matrix'])):
-        routing.AddDisjunction([manager.NodeToIndex(node)], penalty)
+        dist_cb_idx = routing.RegisterTransitCallback(distance_callback)
+        routing.SetArcCostEvaluatorOfAllVehicles(dist_cb_idx)
 
-    # 6.5. Pauses Réglementaires (RSE Breaks)
-    # Règle simplifiée : Si la tournée dure, on insère une pause optionnelle de 45 minutes 
-    # qui doit être prise entre 3h et 6h de travail.
-    solver = routing.solver()
-    # OR-Tools a besoin de savoir combien de temps de "service" est effectué à chaque noeud
-    # pour calculer le vrai temps de travail (conduite + service) avant la pause.
-    node_visit_transit = [0] * routing.nodes()
-    for i in range(routing.nodes()):
-        if i != data['depot']:
-            node_visit_transit[i] = data['service_times'][manager.IndexToNode(i)]
+        def demand_callback(from_index):
+            return demands[manager.IndexToNode(from_index)]
 
-    for vehicle_id in range(data['num_vehicles']):
-        break_intervals = []
-        # Pause de 45 minutes (2700 secondes)
-        break_interval = solver.FixedDurationIntervalVar(
-            3 * 3600,       # Start min (3h)
-            6 * 3600,       # Start max (6h max de travail sans pause)
-            45 * 60,        # Duration (45 min)
-            True,           # Optionnel (ne s'active que si le temps de travail dépasse)
-            f'Break_Vehicle_{vehicle_id}'
+        demand_cb_idx = routing.RegisterUnaryTransitCallback(demand_callback)
+        routing.AddDimensionWithVehicleCapacity(
+            demand_cb_idx, 0, capacities, True, 'Capacity'
         )
-        break_intervals.append(break_interval)
-        time_dimension.SetBreakIntervalsOfVehicle(break_intervals, vehicle_id, node_visit_transit)
 
-    # 7. Résolution
-    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-    search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
-    search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    search_parameters.time_limit.FromSeconds(5) # Limite le calcul à 5s pour rester performant
+        def time_callback(from_index, to_index):
+            i = manager.IndexToNode(from_index)
+            j = manager.IndexToNode(to_index)
+            return duration_matrix[i][j] + service_times[i]
 
-    solution = routing.SolveWithParameters(search_parameters)
+        time_cb_idx = routing.RegisterTransitCallback(time_callback)
+        routing.AddDimensionWithVehicleCapacity(
+            time_cb_idx,
+            3600,
+            [max_service_seconds] * num_vehicles,
+            False,
+            'Time'
+        )
+        time_dimension = routing.GetDimensionOrDie('Time')
 
-    if not solution:
-        raise HTTPException(status_code=400, detail="Impossible de trouver une solution (Contraintes trop strictes).")
+        for idx, (tw_start, tw_end) in enumerate(time_windows):
+            index = manager.NodeToIndex(idx)
+            time_dimension.CumulVar(index).SetRange(tw_start, tw_end)
 
-    # 8. Parser la solution OR-Tools pour renvoyer un JSON structuré
-    routes = []
-    total_distance = 0
-    total_time = 0
+        for v in range(num_vehicles):
+            start_index = routing.Start(v)
+            time_dimension.CumulVar(start_index).SetMin(shift_start)
 
-    for vehicle_id in range(data['num_vehicles']):
-        index = routing.Start(vehicle_id)
-        route = []
-        route_distance = 0
-        route_load = 0
-        
-        while not routing.IsEnd(index):
-            node_index = manager.IndexToNode(index)
+        penalty = 1_000_000
+        for idx, p in enumerate(points):
+            if p.role == "delivery":
+                routing.AddDisjunction([manager.NodeToIndex(idx)], penalty)
+
+        search_params = pywrapcp.DefaultRoutingSearchParameters()
+        search_params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        search_params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        search_params.time_limit.FromSeconds(30)
+
+        solution = routing.SolveWithParameters(search_params)
+
+        if not solution:
+            raise HTTPException(status_code=400, detail="Aucune solution trouvée (contraintes trop strictes).")
+
+        # Extraction de la solution
+        unperformed_ids = []
+        for node in range(routing.Size()):
+            if routing.IsStart(node) or routing.IsEnd(node):
+                continue
+            if solution.Value(routing.NextVar(node)) == node:
+                node_idx = manager.IndexToNode(node)
+                if 0 <= node_idx < len(points):
+                    unperformed_ids.append(points[node_idx].id)
+
+        result_vehicles = []
+        total_distance_m = 0
+        total_service_minutes = 0
+
+        for v in range(num_vehicles):
+            index = routing.Start(v)
+            route_steps = []
+            route_distance_m = 0
+            current_load = sum(demands)
+
+            while not routing.IsEnd(index):
+                node_idx = manager.IndexToNode(index)
+                point = points[node_idx]
+                time_var = time_dimension.CumulVar(index)
+                arrival_s = solution.Min(time_var)
+
+                if point.role == "origin":
+                    departure_s = arrival_s + point.service_time
+                    route_steps.append({
+                        "stop_type": "DEPOT_START",
+                        "address": point.address,
+                        "arrival_time": seconds_to_hhmm(arrival_s),
+                        "departure_time": seconds_to_hhmm(departure_s),
+                        "load_after_stop": current_load,
+                    })
+                elif point.role == "delivery":
+                    departure_s = arrival_s + point.service_time
+                    current_load -= point.demand
+                    route_steps.append({
+                        "stop_type": "DELIVERY",
+                        "client_id": point.id,
+                        "address": point.address,
+                        "arrival_time": seconds_to_hhmm(arrival_s),
+                        "departure_time": seconds_to_hhmm(departure_s),
+                        "pallets_delivered": point.demand,
+                        "load_after_stop": max(0, current_load),
+                    })
+
+                next_index = solution.Value(routing.NextVar(index))
+                route_distance_m += routing.GetArcCostForVehicle(index, next_index, v)
+                index = next_index
+
+            # DEPOT_END
+            node_idx = manager.IndexToNode(index)
+            point = points[node_idx]
             time_var = time_dimension.CumulVar(index)
-            
-            # Récupérer les intervalles de temps estimés (fenêtre d'arrivée)
-            time_min = solution.Min(time_var)
-            time_max = solution.Max(time_var)
-            
-            # On ajoute le point à la tournée du camion
-            route.append({
-                "node_index": node_index,
-                "arrival_time_min": time_min,
-                "arrival_time_max": time_max,
-                "load_added": data['demands'][node_index]
+            arrival_s = solution.Min(time_var)
+            route_steps.append({
+                "stop_type": "DEPOT_END",
+                "address": point.address,
+                "arrival_time": seconds_to_hhmm(arrival_s),
             })
-            
-            route_load += data['demands'][node_index]
-            previous_index = index
-            index = solution.Value(routing.NextVar(index))
-            # Ajout de la distance du trajet vers le prochain point
-            route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
-            
-        # Ajout du point de fin (Retour au Dépôt)
-        node_index = manager.IndexToNode(index)
-        time_var = time_dimension.CumulVar(index)
-        route.append({
-            "node_index": node_index,
-            "arrival_time_min": solution.Min(time_var),
-            "arrival_time_max": solution.Max(time_var),
-            "load_added": 0
-        })
 
-        routes.append({
-            "vehicle_id": request.vehicles[vehicle_id].id,
-            "total_distance_m": route_distance,
-            "total_pallets": route_load,
-            "total_time_s": solution.Min(time_var),
-            "steps": route
-        })
-        total_distance += route_distance
-        total_time += solution.Min(time_var)
+            deliveries_in_route = [s for s in route_steps if s["stop_type"] == "DELIVERY"]
+            if not deliveries_in_route:
+                continue
 
-    # 9. Récupérer les points rejetés (Unperformed nodes)
-    dropped_nodes = []
-    for node in range(routing.Size()):
-        if routing.IsStart(node) or routing.IsEnd(node):
-            continue
-        if solution.Value(routing.NextVar(node)) == node:
-            dropped_nodes.append(manager.IndexToNode(node))
+            working_minutes = (arrival_s - shift_start) // 60
+            total_distance_m += route_distance_m
+            total_service_minutes += working_minutes
 
-    return {
-        "status": "success",
-        "message": "Optimisation terminée avec succès.",
-        "metrics": {
-            "total_distance_m": total_distance,
-            "total_time_s": total_time,
-            "unperformed_nodes_count": len(dropped_nodes)
-        },
-        "routes": routes,
-        "dropped_nodes": dropped_nodes
-    }
+            result_vehicles.append({
+                "vehicle_id": vehicles[v].id,
+                "vehicle_name": vehicles[v].name,
+                "plate": vehicles[v].plate,
+                "driver_id": vehicles[v].driver_id,
+                "driver_name": vehicles[v].driver_name,
+                "route": route_steps,
+                "metrics": {
+                    "total_distance_km": round(route_distance_m / 1000, 2),
+                    "working_duration_minutes": working_minutes,
+                }
+            })
+
+        return {
+            "status": "success",
+            "session_id": request.session_id,
+            "night_shift": night,
+            "summary": {
+                "total_distance_km": round(total_distance_m / 1000, 2),
+                "total_service_time_minutes": total_service_minutes,
+                "unperformed_nodes": unperformed_ids,
+            },
+            "vehicles": result_vehicles,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur interne du solveur: {str(e)}")
