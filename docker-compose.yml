@@ -23,6 +23,13 @@ services:
     networks:
       - optigistik
 
+  solveur:
+    build: ./solveur
+    container_name: solveur
+    ports:
+      - "8000:8000"
+    restart: always
+
   ors:
     image: openrouteservice/openrouteservice:latest
     container_name: ors
