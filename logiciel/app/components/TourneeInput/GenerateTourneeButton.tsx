@@ -7,7 +7,7 @@ import { generateClusters, ClusterNode, ClusteringResult } from '@/services/clus
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Check, Copy, X, Loader2, MapPin, Group, AlertCircle, Send, Code, Grid3X3 } from 'lucide-react'
-import { generateAndSaveDistanceMatrix, MatrixPoint } from '@/services/distanceMatrix'
+import { generateAndSaveDistanceMatrix, MatrixPoint, DistanceMatrixResult } from '@/services/distanceMatrix'
 
 export default function GenerateTourneeButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -16,8 +16,10 @@ export default function GenerateTourneeButton() {
   const [unlocated, setUnlocated] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
   const [showJson, setShowJson] = useState(false)
+  const [showMatrix, setShowMatrix] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [matrixStatus, setMatrixStatus] = useState<'idle' | 'computing' | 'done' | 'error'>('idle')
+  const [matrixResult, setMatrixResult] = useState<DistanceMatrixResult | null>(null)
 
   const session = useDeliveryStore((s) => s.session)
   const selectValidationErrors = useDeliveryStore((s) => s.selectValidationErrors)
@@ -32,6 +34,8 @@ export default function GenerateTourneeButton() {
     setUnlocated([])
     setShowJson(false)
     setMatrixStatus('idle')
+    setMatrixResult(null)
+    setShowMatrix(false)
 
     const nodes: ClusterNode[] = []
     const failed: string[] = []
@@ -100,7 +104,10 @@ export default function GenerateTourneeButton() {
     if (matrixPoints.length >= 2) {
       setMatrixStatus('computing')
       generateAndSaveDistanceMatrix(session.id, matrixPoints)
-        .then(() => setMatrixStatus('done'))
+        .then((res) => {
+          setMatrixResult(res)
+          setMatrixStatus('done')
+        })
         .catch((err) => {
           console.error('Erreur matrice (non bloquant):', err)
           setMatrixStatus('error')
@@ -139,12 +146,21 @@ export default function GenerateTourneeButton() {
               </div>
               <div className="flex items-center gap-2">
                 {result && (
-                  <button 
-                    onClick={() => setShowJson(!showJson)}
+                  <button
+                    onClick={() => { setShowJson(!showJson); setShowMatrix(false) }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${showJson ? 'bg-opti-blue text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                   >
                     <Code className="w-4 h-4" />
                     {showJson ? 'Voir les cartes' : 'Voir le JSON'}
+                  </button>
+                )}
+                {matrixResult && (
+                  <button
+                    onClick={() => { setShowMatrix(!showMatrix); setShowJson(false) }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${showMatrix ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                    {showMatrix ? 'Voir les cartes' : 'Voir la matrice'}
                   </button>
                 )}
                 <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
@@ -163,6 +179,71 @@ export default function GenerateTourneeButton() {
                   </div>
                   <h4 className="text-xl font-bold text-opti-blue mb-2">Traitement en cours...</h4>
                   <p className="text-slate-500 max-w-xs">Géocodage, regroupement et sauvegarde sécurisée dans Firebase.</p>
+                </div>
+              ) : showMatrix && matrixResult ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-slate-700">{matrixResult.points_count} points</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Calculé le {new Date(matrixResult.computed_at).toLocaleString('fr-FR')}</p>
+                    </div>
+                    {matrixResult.points_count > 10 && (
+                      <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-lg">
+                        Aperçu 10×10 sur {matrixResult.points_count}×{matrixResult.points_count}
+                      </span>
+                    )}
+                  </div>
+                  <div className="overflow-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="text-[10px] font-mono border-collapse min-w-full">
+                      <thead>
+                        <tr>
+                          <th className="sticky left-0 bg-slate-50 px-2 py-2 border-b border-r border-slate-200 text-slate-400 font-medium text-left min-w-[120px]">
+                            Départ → Arrivée
+                          </th>
+                          {matrixResult.points.slice(0, 10).map((p, j) => (
+                            <th key={j} className="px-3 py-2 border-b border-slate-200 text-slate-500 font-medium text-center min-w-[72px]" title={p.address}>
+                              <span className="block text-slate-400">{j}</span>
+                              <span className="block text-[9px] font-normal text-slate-300 truncate max-w-[68px]">{p.address.split(',')[0]}</span>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {matrixResult.points.slice(0, 10).map((p, i) => (
+                          <tr key={i} className="hover:bg-slate-50">
+                            <td className="sticky left-0 bg-white hover:bg-slate-50 px-2 py-2 border-b border-r border-slate-200 text-slate-600 font-medium whitespace-nowrap max-w-[160px] overflow-hidden text-ellipsis" title={p.address}>
+                              <span className="text-slate-400 mr-1">{i}</span>
+                              {p.address.split(',')[0]}
+                            </td>
+                            {matrixResult.duration_matrix[i].slice(0, 10).map((dur, j) => {
+                              const dist = matrixResult.distance_matrix[i][j]
+                              return (
+                                <td key={j} className={`px-3 py-2 border-b border-slate-100 text-center tabular-nums ${i === j ? 'bg-slate-50' : ''}`}>
+                                  {i === j ? (
+                                    <span className="text-slate-300">—</span>
+                                  ) : (
+                                    <>
+                                      <span className={`block font-bold ${dur < 1800 ? 'text-emerald-600' : dur < 3600 ? 'text-amber-600' : 'text-red-500'}`}>
+                                        {Math.round(dur / 60)} min
+                                      </span>
+                                      <span className="block text-[9px] text-slate-400 mt-0.5">
+                                        {(dist / 1000).toFixed(1)} km
+                                      </span>
+                                    </>
+                                  )}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-slate-400 text-center">
+                    <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-1" />{'< 30 min '}
+                    <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mx-1 ml-3" />{'30–60 min '}
+                    <span className="inline-block w-2 h-2 bg-red-500 rounded-full mx-1 ml-3" />{'> 60 min'}
+                  </p>
                 </div>
               ) : showJson ? (
                 <div className="bg-slate-900 rounded-2xl p-6 overflow-hidden">
